@@ -23,7 +23,7 @@ theme_jh <- function () {
 #' @description This function plots a pretty volcano plot using the results of the output of \code{msdbulkseqtools::toptable_for_all}
 #'
 #' @param de_res A dataframe created using the \code{msdbulkseqtools::toptable_for_all} command. Alternatively a data frame
-#' containing the following columns: 'symbol' (corresponding to gene name), 'adj.P.Val', 'logFC'
+#' containing the following columns: 'symbol' (corresponding to gene name), 'padj', 'log2FoldChange'
 #' @param title The title of the plot
 #' @param subtitle The subtitle of the plot
 #' @param annotate_by A vector with gene names which will be annotated in the volcano plot.
@@ -49,27 +49,27 @@ theme_jh <- function () {
 #'
 #' @export
 volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NULL, annotation_size=5.2,
-                         padj_threshold=0.05, logFC_threshold=1, ymax=10, xlim=c(-3,3)){
+                         padj_threshold=0.05, logFC_threshold=1, ymax=NULL, xlim=c(-3,3), res=300){
 
   # check if all required columns exist.
-  if (!all(c("adj.P.Val","logFC","symbol") %in% colnames(de_res))){
-    stop("ERROR: `de_res` requires the following columns: `adj.P.Val`,`logFC`,`symbol`")
+  if (!all(c("padj","log2FoldChange","symbol") %in% colnames(de_res))){
+    stop("ERROR: `de_res` requires the following columns: `padj`,`log2FoldChange`,`symbol`")
   }
 
-  # add some extra annotation about the magnitude of differential expression using logFC
+  # add some extra annotation about the magnitude of differential expression using log2FoldChange
   de_res <-
     dplyr::mutate(de_res,
                   sig = case_when(
-                    adj.P.Val >= padj_threshold ~ "non_sig",
-                    adj.P.Val < padj_threshold & abs(logFC) < logFC_threshold ~ "sig",
-                    adj.P.Val < padj_threshold & abs(logFC) >= logFC_threshold ~ "sig - strong"
+                    padj >= padj_threshold ~ "non_sig",
+                    padj < padj_threshold & abs(log2FoldChange) < logFC_threshold ~ "sig",
+                    padj < padj_threshold & abs(log2FoldChange) >= logFC_threshold ~ "sig - strong"
                   )) %>%
-    dplyr::mutate(direction = ifelse(logFC > 0, "up", "down")) %>%
+    dplyr::mutate(direction = ifelse(log2FoldChange > 0, "up", "down")) %>%
     dplyr::mutate(class = paste(sig, direction)) %>%
-    dplyr::mutate(logFC = case_when(
-      logFC > 3 ~ Inf,
-      logFC < -3 ~ -Inf,
-      TRUE ~ logFC
+    dplyr::mutate(log2FoldChange = case_when(
+      log2FoldChange > 3 ~ Inf,
+      log2FoldChange < -3 ~ -Inf,
+      TRUE ~ log2FoldChange
     ))
 
   # get number of differentially expressed genes and determine position where they should be plotted.
@@ -79,13 +79,17 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
     dplyr::mutate(position = ifelse( direction == "down", -1 * position, position)) %>%
     dplyr::mutate(n = formatC(n, format="f", big.mark=",", digits=0))
 
+  # determine a suitable ymax if none was specified
+  if (is.null(ymax)){
+    ymax <- ifelse(min(de_res$padj, na.rm=T) < 1e-16, 18, -log10(min(de_res$padj, na.rm=T))+2)
+  }
 
   # generate the volcano plot
   plot <- de_res %>%
-    dplyr::mutate(adj.P.Val = ifelse(adj.P.Val < 1e-16, Inf, adj.P.Val)) %>% #threshold at 1e16
-    ggplot(aes(x = logFC, y = -log10(adj.P.Val))) +
+    dplyr::mutate(padj = ifelse(padj < 1e-16, 1e-16, padj)) %>% #threshold at 1e16
+    ggplot(aes(x = log2FoldChange, y = -log10(padj))) +
     #geom_point(aes(colour = class ), size = 0.5) +
-    ggrastr::rasterise(geom_point(aes(colour = class), size = 0.8), dpi = 300) + # otherwise if we plot thousands of individual points takes to long
+    ggrastr::rasterise(geom_point(aes(colour = class), size = 0.8), dpi = res) + # otherwise if we plot thousands of individual points takes to long
     scale_colour_manual(values = c("non_sig up" = "gray",
                                    "non_sig down" = "gray",
                                    "sig up" = "#EB7F56",
@@ -108,7 +112,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
   # if we found any differentially regulated genes, add them to the plot
   if(nrow(de_tally)>0){
     plot <- plot +
-      geom_text(fontface = "bold", data = de_tally, aes(x = position, y = ymax - 0.5, label = n, colour = class), size = 5.8 )
+      geom_text(fontface = "bold", data = de_tally, aes(x = position, y = ymax - 0.7, label = n, colour = class), size = 5.8 )
   }
 
   # add annotation if requested.
@@ -121,7 +125,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
       ggrepel::geom_text_repel(
         fontface = "italic",
         data = dplyr::filter(de_res, symbol %in% annotate_by),
-        aes(x = logFC, y = -log10(adj.P.Val), label = symbol),
+        aes(x = log2FoldChange, y = -log10(padj), label = symbol),
         min.segment.length = unit(0, "lines"),
         size = annotation_size) +
       geom_point(
@@ -149,7 +153,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
 #' @param title_result_1 Name of the first differential gene expression analysis. Will be the title on the x-axis.
 #' @param title_result_2  Name of the second differential gene expression analysis. Will be the title on the y-axis.
 #' @param col Name of the column which will be used to perform the correlation analysis.
-#' For example \code{logFC} Has to occure in both \code{result_df1} and \code{result_df2}
+#' For example \code{log2FoldChange} Has to occure in both \code{result_df1} and \code{result_df2}
 #' @examples
 #' \dontrun{
 #' Also see vignette `Standard bulk RNA seq showcase`
@@ -162,7 +166,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
 #'
 #' @export
 
-plot_de_correlation <- function(result_df1, result_df2, title_result_1, title_result_2, col = "logFC"){
+plot_de_correlation <- function(result_df1, result_df2, title_result_1, title_result_2, col = "log2FoldChange"){
   # combine dataframes
 
   res <- dplyr::left_join(result_df1, result_df2,  by = "gene_id" , suffix = c(".1", ".2") )
@@ -575,7 +579,7 @@ create_expression_boxplot <- function(gene, eset, x_axis_groups,
   # get adjusted p value from limma
   adj_p_vals <- limma_results %>%
     dplyr::filter(symbol==gene) %>%
-    pull(adj.P.Val) %>%
+    pull(padj) %>%
     signif(., digits=3)
 
 

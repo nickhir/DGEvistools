@@ -1,0 +1,128 @@
+---
+title: "rna_seq_workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rna_seq_workflow}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+
+## **Introduction**
+This vignette shows a very basic differential gene expression workflow and downstream analyses. 
+The data that will be used comes from the [Gene Expression Omnibus GSE99354](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE99354) and contains bulk RNA sequencing data from mice. 
+
+Among other things, the authors examined gene expression differences between WT mice and mice carrying a TDP-43 Q331K mutation in 5-month or 20-month old frontal cortex tissue, respectively.
+
+
+
+```{r setup}
+library(DGEvistools)
+
+# load in the example data. For generation of it, check scripts in data-raw directory.
+
+# load raw counts
+data(counts)
+
+# load metadata which contains additional information about the sequenced samples, for example different batches, RNA integrity, ...
+data(mdata)
+
+# load annotation data, which contains additional information about the genes for which we have expression data
+data(annotation)
+
+# each row in the metadata corresponds to exactly one column in the counts data
+stopifnot(all(colnames(counts) == rownames(mdata)))
+
+# each row in the annotation table corresponds to one gene (row) in the counts table
+stopifnot(all(rownames(counts) == rownames(annotation)))
+
+```
+
+<br >
+
+<br />
+
+## **Differential gene expression analysis**
+For the differential gene expression analysis we can use `DESEq2`. For that we create a `SummarizedExperiment`, which holds additional information about the experiment, such as gene annotations or conditions. 
+
+```{r, warning=F, message=F}
+library(DESeq2)
+
+# create a `SummarizedExperiemnt`
+se <- SummarizedExperiment(assays = list("raw_counts"=counts),
+                           colData=mdata,
+                           rowData=annotation) 
+
+# Construct DESeqDataSet. Because we are interested in the difference between genotypes we specify the design accordingly
+ddsSE <- DESeqDataSet(se, design = ~ genotype)
+ddsSE$genotype <- relevel(ddsSE$genotype, ref="WT")
+
+
+# perform VST transformation for explorative analysis
+vsd <- vst(ddsSE)
+
+# plot PCA
+pcaData <- plotPCA(vsd, intgroup=c("genotype", "age"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=genotype, shape=age)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance"))
+```
+
+In the PCA, we can see that there are large transcriptomic differences between 5-month and 20-month old frontal cortices. 
+Because the main focus of the analysis is the transcriptomic difference due to the genotype, we will analyze the 5-month and 20-month old cortex separately. 
+
+<br >
+
+<br />
+
+
+```{r, warning=F, message=F}
+# as determined above, we perform DGE separately for 5month and 20month old cortex
+DGE_result <- list()
+DGE_LFC_result <- list()
+
+for (age in unique(colData(ddsSE)$age)){
+  dds_tmp <- ddsSE[,ddsSE$age == age]
+  dds_tmp <- DESeq(dds_tmp)
+  res <- results(dds_tmp)
+  res <- res[order(res$pvalue),]
+  
+  # add the gene symbol and description
+  res <- res %>%
+    as.data.frame() %>%
+    rownames_to_column("ensembl_id") %>%
+    left_join(., data.frame(rowData(ddsSE)), by="ensembl_id")
+  
+  DGE_result[[age]]<- res
+}
+
+
+
+```
+
+### **Visualize results**
+The most common way to visualize results of a differential gene expression experiment is the volcano plot. We can generate one very easily using this function. 
+
+```{r volcano plot}
+volcano_plot(de_res = cervical, title = "Cervical spinal cord", 
+             subtitle = "8 ALS, 8 Controls", ymax = 3.5,
+             annotate_by = c("DDR2","IGFBP5"),
+             annotation_size = 5)
+```
+
+
+
+
+

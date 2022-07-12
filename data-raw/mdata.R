@@ -64,7 +64,14 @@ mdata <- rbind(FC_5month, FC_20month)
 
 # lastly reorder the rows so they correspond to the column names of the counts matrix
 data(counts)
-mdata <- mdata[match(colnames(counts),mdata$title),]
+mdata <- mdata[match(colnames(counts),mdata$title),] %>%
+  tibble::remove_rownames() %>%
+  tibble::column_to_rownames("title")
+
+# rename entries of genotype to R conform strings
+mdata$genotype <- str_replace_all(mdata$genotype, "\\+/\\+","WT") %>%
+  str_replace_all(.,"Q331K/Q331K","MT")
+
 
 stopifnot(all(mdata$title == colnames(counts)))
 
