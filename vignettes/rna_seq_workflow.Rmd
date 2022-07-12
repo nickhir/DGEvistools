@@ -91,7 +91,6 @@ Because the main focus of the analysis is the transcriptomic difference due to t
 ```{r, warning=F, message=F}
 # as determined above, we perform DGE separately for 5month and 20month old cortex
 DGE_result <- list()
-DGE_LFC_result <- list()
 
 for (age in unique(colData(ddsSE)$age)){
   dds_tmp <- ddsSE[,ddsSE$age == age]
@@ -116,10 +115,9 @@ for (age in unique(colData(ddsSE)$age)){
 The most common way to visualize results of a differential gene expression experiment is the volcano plot. We can generate one very easily using this function. 
 
 ```{r volcano plot}
-volcano_plot(de_res = cervical, title = "Cervical spinal cord", 
-             subtitle = "8 ALS, 8 Controls", ymax = 3.5,
-             annotate_by = c("DDR2","IGFBP5"),
-             annotation_size = 5)
+volcano_plot(de_res = DGE_result$`5 months`, title = "5-month old frontal cortex", 
+             subtitle = "6 WT TDP43, 8 MT TDP43",  logFC_threshold = 0.25,
+             annotate_by = c("Col4a2", "Fgf12", "Meaf6"))
 ```
 
 

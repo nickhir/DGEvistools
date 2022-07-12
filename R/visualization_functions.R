@@ -20,10 +20,10 @@ theme_jh <- function () {
 
 
 #' @title Plot a pretty volcano plot
-#' @description This function plots a pretty volcano plot using the results of the output of \code{msdbulkseqtools::toptable_for_all}
+#' @description This function plots a pretty volcano plot using the results of the output of \code{DESeq2::results()}
 #'
 #' @param de_res A dataframe created using the \code{msdbulkseqtools::toptable_for_all} command. Alternatively a data frame
-#' containing the following columns: 'symbol' (corresponding to gene name), 'padj', 'log2FoldChange'
+#' containing the following columns: 'padj', 'log2FoldChange'
 #' @param title The title of the plot
 #' @param subtitle The subtitle of the plot
 #' @param annotate_by A vector with gene names which will be annotated in the volcano plot.
@@ -33,15 +33,9 @@ theme_jh <- function () {
 #' @param logFC_threshold Threshold determining which genes should be counted as "strongly" differentially expressed
 #' @param ymax Maximum of the y axis
 #' @param xlim The x axis limits.
+#' @param res Resolution of the plot. The higher the resolution, the longer takes the plot.
 #' @return A ggplot of a volcano plot.
 #'
-#' @examples
-#' \dontrun{
-#' Also see vignette `Standard bulk RNA seq showcase`
-#' res <- limmaVoomFit(v, design, cmat)
-#' res_table <- msdbulkseqtools::toptable_for_all(res)
-#' volcano_plot(res_table, annotate_by=c("SOD1"))
-#' }
 #'
 #' @import ggplot2
 #' @import grid
@@ -52,14 +46,14 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
                          padj_threshold=0.05, logFC_threshold=1, ymax=NULL, xlim=c(-3,3), res=300){
 
   # check if all required columns exist.
-  if (!all(c("padj","log2FoldChange","symbol") %in% colnames(de_res))){
-    stop("ERROR: `de_res` requires the following columns: `padj`,`log2FoldChange`,`symbol`")
+  if (!all(c("padj","log2FoldChange") %in% colnames(de_res))){
+    stop("ERROR: `de_res` requires the following columns: `padj`,`log2FoldChange`")
   }
 
   # add some extra annotation about the magnitude of differential expression using log2FoldChange
-  de_res <-
-    dplyr::mutate(de_res,
-                  sig = case_when(
+  de_res <- de_res %>%
+    dplyr::filter(dplyr::if_all(c(padj, log2FoldChange), ~ !is.na(.))) %>%
+    dplyr::mutate(sig = case_when(
                     padj >= padj_threshold ~ "non_sig",
                     padj < padj_threshold & abs(log2FoldChange) < logFC_threshold ~ "sig",
                     padj < padj_threshold & abs(log2FoldChange) >= logFC_threshold ~ "sig - strong"
@@ -71,6 +65,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
       log2FoldChange < -3 ~ -Inf,
       TRUE ~ log2FoldChange
     ))
+
 
   # get number of differentially expressed genes and determine position where they should be plotted.
   de_tally <- de_res %>% group_by(sig, direction, class) %>% tally() %>%
@@ -117,6 +112,9 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
 
   # add annotation if requested.
   if(!is.null(annotate_by)){
+    if (! "symbol" %in% colnames(de_res)){
+      stop("Dataframe doesnt contain a `symbol` column")
+    }
     # Check if all the genes we want to annotate occure in the column
     if (sum(de_res$symbol %in% annotate_by) != length(annotate_by)){
       stop("Specified gene names for annotation do not occure in the symbol column of `de_res`.")
@@ -129,10 +127,10 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
         min.segment.length = unit(0, "lines"),
         size = annotation_size) +
       geom_point(
-        data = dplyr::filter(de_res, symbol %in% annotate_by), size = 1.6, colour = "black"
+        data = dplyr::filter(de_res, symbol %in% annotate_by), size = 2.5, colour = "black"
       ) +
       geom_point(aes(colour = class ),
-                 data = dplyr::filter(de_res, symbol %in% annotate_by), size = 1
+                 data = dplyr::filter(de_res, symbol %in% annotate_by), size = 1.3
       )
 
   }
@@ -148,32 +146,54 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
 #' @description This function visualizes the correlation between two different differential gene expression analyses.
 #' Might be used to compare two different tissues or two different timepoints and see how similar they behave.
 
-#' @param result_df1  The first results dataframe. Usually created using the \code{msdbulkseqtools::toptable_for_all} command.
-#' @param result_df2 The second results dataframe. Usually created using the \code{msdbulkseqtools::toptable_for_all} command.
+#' @param result_df1  The first results dataframe. Usually created using the \code{DESeq2::results()} command.
+#' @param result_df2 The second results dataframe. Usually created using the \code{DESeq2::results()} command.
 #' @param title_result_1 Name of the first differential gene expression analysis. Will be the title on the x-axis.
 #' @param title_result_2  Name of the second differential gene expression analysis. Will be the title on the y-axis.
 #' @param col Name of the column which will be used to perform the correlation analysis.
-#' For example \code{log2FoldChange} Has to occure in both \code{result_df1} and \code{result_df2}
-#' @examples
-#' \dontrun{
-#' Also see vignette `Standard bulk RNA seq showcase`
-#' res1 <- limmaVoomFit(v, design, cmat)
-#' res2 <- limmaVoomFit(v, design, cmat)
-#' res_table1 <- msdbulkseqtools::toptable_for_all(res1)
-#' res_table2 <- msdbulkseqtools::toptable_for_all(res2)
-#' plot_de_correlation(res_table1, res_table2, "first experiment", "second experiment")
-#' }
-#'
+#' @param remove_outlier If true, only values between the 1st and 99th percentile are included in analysis.
+#' For example \code{log2FoldChange} Has to occur in both \code{result_df1} and \code{result_df2}
+
 #' @export
 
-plot_de_correlation <- function(result_df1, result_df2, title_result_1, title_result_2, col = "log2FoldChange"){
+plot_de_correlation <- function(result_df1, result_df2,
+                                title_result_1, title_result_2,
+                                col = "log2FoldChange",
+                                remove_outlier=T){
   # combine dataframes
+  join_col_1 <- colnames(result_df1)[1]
+  join_col_2 <- colnames(result_df2)[1]
+  if (join_col_1 != join_col_2){
+    stop("The first column name of result_df1 and result_df2 should contain the same information and column name.")
+  }
 
-  res <- dplyr::left_join(result_df1, result_df2,  by = "gene_id" , suffix = c(".1", ".2") )
+  res <- dplyr::left_join(result_df1,
+                          result_df2,
+                          by = join_col_1 ,
+                          suffix = c(".1", ".2"))
 
   # when joining we add a suffix, so we also have to do it here
   x_string <- paste0(col, ".1")
   y_string <- paste0(col, ".2")
+
+  # sometimes we have extreme outliers which distort the results.
+  # we only keep values between the 1st and 99th percentile
+  if (remove_outlier){
+    before = nrow(res)
+    Q_x <- quantile(res[,x_string], probs=c(0.01, 0.99))
+    Q_y <- quantile(res[,y_string], probs=c(0.01, 0.99))
+
+    res <- res %>%
+      dplyr::filter(get(x_string)>Q_x[1]) %>%
+      dplyr::filter(get(x_string)<Q_x[2]) %>%
+      dplyr::filter(get(y_string)>Q_y[1]) %>%
+      dplyr::filter(get(y_string)<Q_y[2])
+    removed = before - nrow(res)
+    message(paste(removed, "entries were removed, because we are only plotting values between the 1st and 99th percentile. Specify `remove_outlier=F` to disable."))
+  }
+
+
+
 
   # run linear regression to determine the slope and intercept.
   correlation_eq <- broom::tidy(lm(as.formula(paste0(y_string, " ~ ", x_string)), res))
