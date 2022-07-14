@@ -252,12 +252,135 @@ enrichment_heatmap(gsea_df = GSEA_result,
 ```
 
 
+## **Weighted correlation network analysis**
+Another potentially downstream analysis is Weighted correlation network analysis (WGCNA). For this we will use the GWENA pacakge which provides a nice wrapper function. 
+
+**Note**: When performing WGCNA you ideally have many samples, **at least 15 samples**.
+
+```{r WGCNA, fig.width=7.4, fig.height=4}
+library(GWENA)
+# you might want to select for example only the 70% most variable genes before running GWENA. 
+# We skip this here, because we only have 5k genes to begin with
+
+# build net. On a real world data set this might take a long time.
+vst_counts_20_month <- assay(vsd[,vsd$age == "20 months"])
+net <- build_net(t(vst_counts_20_month), cor_func = "pearson", network_type="signed",
+                         n_threads = 5)
+
+# detect modules. You might want to try out different thresholds.
+# you can also perform an overrepresentation analysis with the genes of the different modules, to get insights 
+# into the biological function of the modules.
+modules <- detect_modules(t(vst_counts_20_month),
+                          net$network,
+                          detailled_result = TRUE,
+                          merge_threshold = 0.2)
+
+# save the detected modules to disk, so we do not have to rerun everything each time.
+# we save it as a temp file, but you should save it somewhere accessible.
+module_save_path <- tempfile()
+saveRDS(modules, module_save_path)
 
 
 
+# Visualize the GWENA result in a heatmap
+# for that scale counts.
+scaled_counts <- vst_counts_20_month %>% t() %>% scale() %>% t()
+
+
+# we also have to create the annotation dataframe for the columns.
+library(ComplexHeatmap)
+
+# the annotation that we add here are pretty meaningless, but the might be something like batch, or treatment status.
+set.seed(123)
+mdata$treatment <- sample(c("Ipilimumab","Nivolumab"),replace = T, size = nrow(mdata))
+
+# filter to only contain FC 20 month old
+mdata_20 <- mdata %>% 
+  dplyr::filter(age=="20 months")
 
 
 
+ha <- HeatmapAnnotation("Treatment" = mdata_20$treatment,
+                        "Genotype" = mdata_20$genotype,
+                        col = list(Treatment= setNames(c("#30C42B", "#2B55C4"), unique(mdata_20$treatment)),
+                                   Genotype = setNames(c("#E1500D","#8550BA"),unique(mdata_20$genotype))))
+  
+# Here we do not see any striking patterns, but this is because our dataset is small compared to a real one.
+gwena_heatmap(scaled_counts = scaled_counts,
+              mdata = mdata_20 %>% rownames_to_column("ID"), 
+              info_col = "ID",
+              GWENA_modules = module_save_path,
+              heatmap_annotation = ha)
+```
+
+
+```{r, fig.width=7.4, fig.height=4}
+# It is also possible to split columns based on the results of a clustering algorithm:
+# This can be any algorithm. The result should be a named vector where each sample is assigned to one cluster.
+# Here, as a showcase, we use standard `hclust` 
+
+dists <- dist(t(scaled_counts))
+hc <- hclust(dists)
+# we specify that the tree should be cut so that 3 clusters emerge.
+clustering_result <- cutree(hc, k=2)
+
+gwena_heatmap(scaled_counts = scaled_counts,
+              mdata = mdata_20 %>% rownames_to_column("ID"), 
+              info_col = "ID",
+              GWENA_modules = module_save_path,
+              heatmap_annotation = ha,
+              column_cluster = clustering_result)
+```
+
+
+### **Associate modules with phenotype**
+To associate identified expression modules with phenotypes, it is useful to look at the _eigengene expression_ of a sample. The _eigengene expression_ is calculated for each patient and module and basically summarizes the expression of a module for a given patient. Using the _eigengene expression_ we can look for associations between modules and clinical variables.
+
+
+```{r module association, fig.width=8.3, fig.height=4.2}
+library(ggpubr)
+modules <- readRDS(module_save_path)
+
+# add a random contionus clinical variable
+mdata$survival_time <- runif(nrow(mdata), min = 2, 5)
+
+
+
+# add the eigengene expression to the metadata
+mdata_eigengene <- modules$modules_eigengenes %>% 
+  rownames_to_column("ID") %>%
+  left_join(., mdata %>% rownames_to_column("ID"), by="ID")
+
+# check for association of categorical variable
+# Seems like WT TDP43 carriers have significantly higher module 2 eigengene expression than MT
+p1<-module_association(mdata_eigengene = mdata_eigengene,
+                   phenotype = "genotype",
+                   module_eigengene = "ME2",
+                   xlab = "Sample status",
+                   ylab= "Module 2\neigengene epxression",
+                   colors=c("firebrick","steelblue"))
+
+# check for association of continous variable
+p2<-module_association(mdata_eigengene = mdata_eigengene,
+                   phenotype = "survival_time",
+                   module_eigengene = "ME2",
+                   ymin=-0.5, ymax=0.4,
+                   xlab = "Survival time [years]",
+                   ylab= "Module 2\neigengene epxression",
+                   colors=c("firebrick","steelblue"),
+                   label_x_pos = 2,
+                   label_size = 5)
+cowplot::plot_grid(p1,p2, labels="auto")
+```
+
+<br >
+
+<br />
+
+## **Session info**
+```{r session info}
+sessionInfo()
+```
 
 
 

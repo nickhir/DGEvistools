@@ -275,9 +275,11 @@ enrichment_heatmap <- function(gsea_df, comparisons_column,
   # get the p values of the selected ontologies for all other comparisons.
   wide_df <- gsea_df %>%
     dplyr::filter(ID %in% ontologies_of_interest) %>%
-    dplyr::select(c("ID","Description", "p.adjust",comparisons_column)) %>%
+    dplyr::mutate(neglog10FDR=-log10(p.adjust))%>%
+    dplyr::select(c("ID","Description", "neglog10FDR",comparisons_column)) %>%
     tidyr::pivot_wider(names_from = comparisons_column,
-                       values_from = p.adjust)
+                       values_from = neglog10FDR)
+
   # this matrix is necessary to annotate significance.
   wide_matrix <- wide_df %>%
     distinct(Description,.keep_all = T) %>%
@@ -296,8 +298,7 @@ enrichment_heatmap <- function(gsea_df, comparisons_column,
     dplyr::mutate(name = str_replace_all(name, "_"," ")) %>%
     dplyr::mutate(name = str_wrap(name, 30)) %>%
     tibble::column_to_rownames("name") %>%
-    as.matrix %>%
-    -log10(.)
+    as.matrix
 
   # calculate an appropriate width of the cells
   names_length <- max(nchar(colnames(wide_matrix)))
@@ -320,7 +321,7 @@ enrichment_heatmap <- function(gsea_df, comparisons_column,
 #' Here, the rows get split into the different modules and columns into either predefined columns clusters or they get clustered using \code{hclust}.
 #'
 #' @param scaled_counts A matrix of z-transformed counts. Columns should correspond to samples and rows to genes.
-#' @param mdata A dataframe with information about the subjects.
+#' @param mdata A dataframe with information about the samples
 #' @param info_col A column in the \code{mdata} object, which has entries that match the column names of \code{scaled_counts}.
 #' They have to be in the same order, otherwise an error will occure.
 #' @param column_cluster A named vector of subjects and corresponding cluster. Use only if you already determined how to cluster patients.
@@ -330,17 +331,7 @@ enrichment_heatmap <- function(gsea_df, comparisons_column,
 #' @param heatmap_annotation A \href{https://jokergoo.github.io/ComplexHeatmap-reference/book/heatmap-annotations.html}{HeatmapAnnotation object}.
 #' @param ... Other arguments that are passed directly to the \code{ComplexHeatmap::Heatmap} function. Might be something like \code{show_row_names=T}
 #' @return A \code{ComplexHeatmap} which shows the GWENA results.
-#' @examples
-#' \dontrun{
-#' See vignette `Standard bulk RNA seq showcase`
-#' scaled_counts <- vst_counts %>% t() %>% scale() %>% t() # first have to vst normalize counts
-#' module_save_path <- "/path/to/file/with/detected/modules" # saved output of GWENA::detect_modules. Same genes that are in scaled counts
-#' mdata <- fread("path/to/file/with/metadata")
-#' gwena_heatmap(scaled_counts = scaled_counts,
-#' mdata = mdata, info_col = "sample.ID",
-#' GWENA_modules = module_save_path,
-#' heatmap_annotation = NULL)
-#' }
+#'
 #' @export
 #'
 gwena_heatmap <- function(scaled_counts, mdata, info_col,
