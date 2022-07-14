@@ -215,7 +215,8 @@ plot_de_correlation <- function(result_df1, result_df2,
     geom_bin2d(bins = 300) +
     scale_fill_continuous(type = "viridis") +
     guides(fill = "none") +
-    theme_jh()
+    theme_jh() %+%
+    theme(axis.title = element_text(size=15), axis.text = element_text(size=12))
 
   return(plot)
 }

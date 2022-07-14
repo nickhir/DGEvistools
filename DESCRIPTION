@@ -1,11 +1,10 @@
 Package: DGEvistools
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Functions to visualize DGE results downstream of DESeq2
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Nick Hirschmüller
+Maintainer: Nick Hirschmüller <hirschmueller.nick@gmail.com>
+Description: Small R package with some functions to visualize DGE results downstream of DESeq2
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true

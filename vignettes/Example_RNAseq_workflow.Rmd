@@ -127,7 +127,7 @@ p1<-volcano_plot(de_res = DGE_result$`5 months`, title = "5-month old frontal co
 
 p2<-volcano_plot(de_res = DGE_result$`20 months`, title = "20-month old frontal cortex", 
              subtitle = "8 WT TDP43, 10 MT TDP43",  logFC_threshold = 0.25,
-             annotate_by = c("Synrg", "Spop", "Meaf6"), xlim = c(-2,2))
+             annotate_by = c("Synrg", "Spop", "Kras"), xlim = c(-2,2))
 
 cowplot::plot_grid(p1, p2, labels = "auto")
 
@@ -150,8 +150,8 @@ p1<-plot_de_correlation(result_df1 = DGE_result$`5 months`,
 
 p2<-plot_de_correlation(result_df1 = DGE_result$`5 months`,
                     result_df2 = DGE_result$`20 months`,
-                    title_result_1 = "5-month old frontal cortex",
-                    title_result_2 = "20-month old frontal cortex",
+                    title_result_1 = "Base expression\n5-month FC",
+                    title_result_2 = "Base expression\n20-month FC",
                     col="baseMean") 
 
 cowplot::plot_grid(p1, p2, labels = "auto")
@@ -357,7 +357,7 @@ mdata_eigengene <- modules$modules_eigengenes %>%
 p1<-module_association(mdata_eigengene = mdata_eigengene,
                    phenotype = "genotype",
                    module_eigengene = "ME2",
-                   xlab = "Sample status",
+                   xlab = "Genotype",
                    ylab= "Module 2\neigengene epxression",
                    colors=c("firebrick","steelblue"))
 
