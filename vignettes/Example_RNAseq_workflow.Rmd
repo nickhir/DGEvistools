@@ -1,18 +1,19 @@
 ---
-title: "rna_seq_workflow"
+title: "Example RNAseq workflow"
+author: "Nick Hirschmüller"
 contact: "hirschmueller.nick@gmail.com"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document:
     toc: true
     toc_depth: 2
+    output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{rna_seq_workflow}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{Example RNAseq workflow}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: console
+  %\VignetteEncoding{UTF-8}
 ---
+
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -23,8 +24,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-
-
 ## **Introduction**
 This vignette shows a very basic differential gene expression workflow and downstream analyses. 
 The data that will be used comes from the [Gene Expression Omnibus GSE99354](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE99354) and contains bulk RNA sequencing data from mice. 
@@ -34,7 +33,7 @@ Among other things, the authors examined gene expression differences between WT 
 
 
 ```{r setup, message=F, warning=F}
-devtools::load_all()
+library(DGEvistools)
 library(tidyverse)
 # load in the example data. For generation of it, check scripts in data-raw directory.
 # load raw counts
@@ -234,8 +233,10 @@ ranked_gene_list <- lapply(setNames(names(DGE_result),names(DGE_result)), functi
   )
 
 # run GSEA and combine results in one dataframe
-GSEA_result <- lapply(setNames(names(DGE_result),names(DGE_result)), function(age){
-  tmp <- clusterProfiler::GSEA(ranked_gene_list[[age]], TERM2GENE=h_gene_sets, pvalueCutoff = 1)@result %>%
+GSEA_result <-lapply(setNames(names(DGE_result),names(DGE_result)), function(age){
+  tmp <- pkgcond::suppress_messages(clusterProfiler::GSEA(ranked_gene_list[[age]], 
+                                                          TERM2GENE=h_gene_sets, 
+                                                          pvalueCutoff = 1))@result %>%
     dplyr::mutate(age=age)
 }) %>% dplyr::bind_rows()
 
@@ -257,7 +258,7 @@ Another potentially downstream analysis is Weighted correlation network analysis
 
 **Note**: When performing WGCNA you ideally have many samples, **at least 15 samples**.
 
-```{r WGCNA, fig.width=7.4, fig.height=4}
+```{r WGCNA, fig.width=6.3, fig.height=4}
 library(GWENA)
 # you might want to select for example only the 70% most variable genes before running GWENA. 
 # We skip this here, because we only have 5k genes to begin with
@@ -288,8 +289,8 @@ scaled_counts <- vst_counts_20_month %>% t() %>% scale() %>% t()
 
 
 # we also have to create the annotation dataframe for the columns.
-library(ComplexHeatmap)
-
+suppressPackageStartupMessages(library(ComplexHeatmap))
+ht_opt$message = FALSE
 # the annotation that we add here are pretty meaningless, but the might be something like batch, or treatment status.
 set.seed(123)
 mdata$treatment <- sample(c("Ipilimumab","Nivolumab"),replace = T, size = nrow(mdata))
@@ -314,7 +315,7 @@ gwena_heatmap(scaled_counts = scaled_counts,
 ```
 
 
-```{r, fig.width=7.4, fig.height=4}
+```{r, fig.width=6.3, fig.height=4}
 # It is also possible to split columns based on the results of a clustering algorithm:
 # This can be any algorithm. The result should be a named vector where each sample is assigned to one cluster.
 # Here, as a showcase, we use standard `hclust` 
@@ -370,7 +371,7 @@ p2<-module_association(mdata_eigengene = mdata_eigengene,
                    colors=c("firebrick","steelblue"),
                    label_x_pos = 2,
                    label_size = 5)
-cowplot::plot_grid(p1,p2, labels="auto")
+pkgcond::suppress_messages(cowplot::plot_grid(p1,p2, labels="auto"))
 ```
 
 <br >

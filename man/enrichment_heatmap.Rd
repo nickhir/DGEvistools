@@ -7,10 +7,8 @@
 enrichment_heatmap(
   gsea_df,
   comparisons_column,
-  comparisons = NULL,
   ordering = NULL,
   top_n = 10,
-  data_src = "KEGG",
   color = viridis::plasma(50, end = 0.75),
   legend_title = "-log10(FDR)",
   title = "",
@@ -19,17 +17,13 @@ enrichment_heatmap(
 )
 }
 \arguments{
-\item{gsea_df}{A dataframe which contains the results of \code{msdbulkseqtools::glattCameraPR}. For creation see \code{examples}}
+\item{gsea_df}{A dataframe which contains the results of \code{clusterProfiler::GSEA}.}
 
 \item{comparisons_column}{The name of the column which contains the different comparisons that you want to make.}
-
-\item{comparisons}{A vector of names which correspond to the columns of the heatmap (i.e. the conditions you want to compare).}
 
 \item{ordering}{By which condition should the p values of the displayed gene sets be ranked}
 
 \item{top_n}{The number of gene sets you want to display.}
-
-\item{data_src}{The data source for which you want to display the top enriched terms.}
 
 \item{color}{A colormap for the heatmap}
 
@@ -44,28 +38,4 @@ enrichment_heatmap(
 \description{
 This function can be used to compare GSEA results performed for different tissues, different timepoints or conditions.
 It will generate a heatmap, where rows represent different gene sets and columns the different comparisons.
-}
-\examples{
-\dontrun{
-Also see vignette `Standard bulk RNA seq showcase`
-gsrc <- c("go_component","KEGG")
-gsea <- msdbulkseqtools::glattCameraPR(g_src = gsrc,
-                                      efit_list = res_list,
-                                      specie = "Hs",
-                                      g_cor_list = tcor_list,
-                                      gs_low = 5,
-                                      gs_high = 500)
-
-gsea_df <- lapply(gsea, function(Ontology){
-  lapply(names(Ontology), function(Tissue){
-    lapply(names(Ontology[[Tissue]]),function(Contrast){
-      Ontology[[Tissue]][[Contrast]] \%>\% mutate(contrast = Contrast)
-      }) \%>\% dplyr::bind_rows() \%>\% mutate(tissue = Tissue)
-   }) \%>\% bind_rows()
- }) \%>\% bind_rows()
-
-enrichment_heatmap(gsea_df = gsea_df, comparisons = c("cervical","lumbar"),
-                  top_n = 20, data_src = "go_component", comparisons_column = "tissue",
-                  title = "Tissue comparison")
-}
 }

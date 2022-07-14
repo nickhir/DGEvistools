@@ -17,7 +17,7 @@ gwena_heatmap(
 \arguments{
 \item{scaled_counts}{A matrix of z-transformed counts. Columns should correspond to samples and rows to genes.}
 
-\item{mdata}{A dataframe with information about the subjects.}
+\item{mdata}{A dataframe with information about the samples}
 
 \item{info_col}{A column in the \code{mdata} object, which has entries that match the column names of \code{scaled_counts}.
 They have to be in the same order, otherwise an error will occure.}
@@ -38,16 +38,4 @@ A \code{ComplexHeatmap} which shows the GWENA results.
 \description{
 After running GWENA (WGCNA) this function can be used to visualize the results in a heatmap.
 Here, the rows get split into the different modules and columns into either predefined columns clusters or they get clustered using \code{hclust}.
-}
-\examples{
-\dontrun{
-See vignette `Standard bulk RNA seq showcase`
-scaled_counts <- vst_counts \%>\% t() \%>\% scale() \%>\% t() # first have to vst normalize counts
-module_save_path <- "/path/to/file/with/detected/modules" # saved output of GWENA::detect_modules. Same genes that are in scaled counts
-mdata <- fread("path/to/file/with/metadata")
-gwena_heatmap(scaled_counts = scaled_counts,
-mdata = mdata, info_col = "sample.ID",
-GWENA_modules = module_save_path,
-heatmap_annotation = NULL)
-}
 }

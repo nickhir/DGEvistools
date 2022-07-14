@@ -9,33 +9,25 @@ plot_de_correlation(
   result_df2,
   title_result_1,
   title_result_2,
-  col = "logFC"
+  col = "log2FoldChange",
+  remove_outlier = T
 )
 }
 \arguments{
-\item{result_df1}{The first results dataframe. Usually created using the \code{msdbulkseqtools::toptable_for_all} command.}
+\item{result_df1}{The first results dataframe. Usually created using the \code{DESeq2::results()} command.}
 
-\item{result_df2}{The second results dataframe. Usually created using the \code{msdbulkseqtools::toptable_for_all} command.}
+\item{result_df2}{The second results dataframe. Usually created using the \code{DESeq2::results()} command.}
 
 \item{title_result_1}{Name of the first differential gene expression analysis. Will be the title on the x-axis.}
 
 \item{title_result_2}{Name of the second differential gene expression analysis. Will be the title on the y-axis.}
 
-\item{col}{Name of the column which will be used to perform the correlation analysis.
-For example \code{logFC} Has to occure in both \code{result_df1} and \code{result_df2}}
+\item{col}{Name of the column which will be used to perform the correlation analysis.}
+
+\item{remove_outlier}{If true, only values between the 1st and 99th percentile are included in analysis.
+For example \code{log2FoldChange} Has to occur in both \code{result_df1} and \code{result_df2}}
 }
 \description{
 This function visualizes the correlation between two different differential gene expression analyses.
 Might be used to compare two different tissues or two different timepoints and see how similar they behave.
-}
-\examples{
-\dontrun{
-Also see vignette `Standard bulk RNA seq showcase`
-res1 <- limmaVoomFit(v, design, cmat)
-res2 <- limmaVoomFit(v, design, cmat)
-res_table1 <- msdbulkseqtools::toptable_for_all(res1)
-res_table2 <- msdbulkseqtools::toptable_for_all(res2)
-plot_de_correlation(res_table1, res_table2, "first experiment", "second experiment")
-}
-
 }

@@ -12,13 +12,14 @@ volcano_plot(
   annotation_size = 5.2,
   padj_threshold = 0.05,
   logFC_threshold = 1,
-  ymax = 10,
-  xlim = c(-3, 3)
+  ymax = NULL,
+  xlim = c(-3, 3),
+  res = 300
 )
 }
 \arguments{
 \item{de_res}{A dataframe created using the \code{msdbulkseqtools::toptable_for_all} command. Alternatively a data frame
-containing the following columns: 'symbol' (corresponding to gene name), 'adj.P.Val', 'logFC'}
+containing the following columns: 'padj', 'log2FoldChange'}
 
 \item{title}{The title of the plot}
 
@@ -36,19 +37,12 @@ Gene names have to occur in the 'symbol' column of 'de_res'}
 \item{ymax}{Maximum of the y axis}
 
 \item{xlim}{The x axis limits.}
+
+\item{res}{Resolution of the plot. The higher the resolution, the longer takes the plot.}
 }
 \value{
 A ggplot of a volcano plot.
 }
 \description{
-This function plots a pretty volcano plot using the results of the output of \code{msdbulkseqtools::toptable_for_all}
-}
-\examples{
-\dontrun{
-Also see vignette `Standard bulk RNA seq showcase`
-res <- limmaVoomFit(v, design, cmat)
-res_table <- msdbulkseqtools::toptable_for_all(res)
-volcano_plot(res_table, annotate_by=c("SOD1"))
-}
-
+This function plots a pretty volcano plot using the results of the output of \code{DESeq2::results()}
 }

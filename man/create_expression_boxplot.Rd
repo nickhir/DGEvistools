@@ -6,10 +6,10 @@
 \usage{
 create_expression_boxplot(
   gene,
-  eset,
-  x_axis_groups,
+  SE,
+  intgroup,
   test_comparison = NULL,
-  limma_results = NULL,
+  DESEq_res = NULL,
   colors = NULL,
   x_lab = ggplot2::waiver(),
   y_lab = expression(log[2](CPM)),
@@ -18,23 +18,24 @@ create_expression_boxplot(
 )
 }
 \arguments{
-\item{gene}{The gene symbol of the gene for which the expression should be plotted. Must occur in the \code{symbol} column of \code{fData} of the \code{ExpressionSet}.}
+\item{gene}{The gene symbol of the gene for which the expression should be plotted. Must occur in the \code{symbol} column of \code{rowData()} of the \code{SummarizedExperiment}.}
 
-\item{eset}{The \code{ExpresisonSet}. For generation, see example.}
+\item{SE}{A SummarizedExperiment. Usually the same which was used to generate the DESEq2 object.}
 
-\item{x_axis_groups}{Specify which two conditions should be compared}
+\item{intgroup}{Counts are grouped by this variable. Has to occur in \code{colData()} of the \code{SummarizedExperiment}.}
 
 \item{test_comparison}{Optionally, you can also specify if and how conditions should be compared. Should be a list which contains the comparisons that you are interested in.
 See examples and \href{https://cran.r-project.org/web/packages/ggsignif/vignettes/intro.html}{here}.}
 
-\item{limma_results}{By default, if you specify \code{test_comparison} a \code{wilcox.test} is performed.
+\item{DESEq_res}{By default, if you specify \code{test_comparison} a \code{wilcox.test} is performed.
 This might be fine to get an intuition if expression differences between two conditions
- are significantly different, but the proper way is to use the the p value that
- was determined using \code{limma}. For that, you can simply specify an object that was created \code{msdbulkseqtools::toptable_for_all} that contains the correct contrast/comparison.}
+are significantly different, but the proper way is to use the the p value that
+was determined using \code{DESeq}. For that, you can simply specify an object that was created \code{DESeq2::results()} that contains the correct contrast/comparison.
+Also has to contain column \code{symbol}.}
 
-\item{colors}{Specify the colors of the boxplots. Number of colors must match number of factors in \code{x_axis_groups}.}
+\item{colors}{Specify the colors of the boxplots. Number of colors must match number of factors in \code{intgroup}.}
 
-\item{x_lab}{X axis label. Defaults to \code{x_axis_groups}}
+\item{x_lab}{X axis label. Defaults to \code{intgroup}}
 
 \item{y_lab}{Y axis label. Defaults to \code{log(CPM)}}
 
@@ -46,24 +47,12 @@ This might be fine to get an intuition if expression differences between two con
 A ggplot of a boxplot
 }
 \description{
-Given a properly formatted \code{ExpresisonSet}, this function can quickly plot boxplots to investigate the expression of specific genes between two conditions.
-The \code{ExpresisonSet} can be easily generated from the \code{DGElist} which is used by \code{limma}. See example.
+Given a properly formatted \code{SummarizedExperiment.}, this function can quickly plot boxplots to investigate the expression of specific genes between two conditions.
+By default, CPM transformed counts are expected
 }
 \examples{
 \dontrun{
-See vignette `Standard bulk RNA seq showcase`
-
-eset <- ExpressionSet(assayData = counts, # Normalized counts
-       phenoData = AnnotatedDataFrame(mdata), # information about the samples
-       featureData = AnnotatedDataFrame(ann_uniq)) # information about the genes. Must have a \code{symbol} column which corresponds to gene name
-
-
-create_expression_boxplot(gene = "IGFBP5", eset = expressionSet,
-x_axis_groups = "sample.status",
-test_comparison = list(c("diseased","healthy")), # optional
-colors = c("firebrick","steelblue"), #optional
-x_lab = "Sample Phenotype", #optional
-ymax=11, ymin=5) #optional
+See vignette `rna_seq_workflow`
 }
 
 }
