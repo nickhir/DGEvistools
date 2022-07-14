@@ -1,6 +1,11 @@
 ---
 title: "rna_seq_workflow"
-output: rmarkdown::html_vignette
+contact: "hirschmueller.nick@gmail.com"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{rna_seq_workflow}
   %\VignetteEncoding{UTF-8}
@@ -11,8 +16,10 @@ editor_options:
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.align = "center",
+  warning = F,
+  messages = F
 )
 ```
 
@@ -26,11 +33,10 @@ Among other things, the authors examined gene expression differences between WT 
 
 
 
-```{r setup}
-library(DGEvistools)
-
+```{r setup, message=F, warning=F}
+devtools::load_all()
+library(tidyverse)
 # load in the example data. For generation of it, check scripts in data-raw directory.
-
 # load raw counts
 data(counts)
 
@@ -55,11 +61,11 @@ stopifnot(all(rownames(counts) == rownames(annotation)))
 ## **Differential gene expression analysis**
 For the differential gene expression analysis we can use `DESEq2`. For that we create a `SummarizedExperiment`, which holds additional information about the experiment, such as gene annotations or conditions. 
 
-```{r, warning=F, message=F}
+```{r, warning=F, message=F, fig.width =5.8, fig.height=3.8}
 library(DESeq2)
 
 # create a `SummarizedExperiemnt`
-se <- SummarizedExperiment(assays = list("raw_counts"=counts),
+se <- SummarizedExperiment(assays = list("counts"=counts),
                            colData=mdata,
                            rowData=annotation) 
 
@@ -75,17 +81,13 @@ vsd <- vst(ddsSE)
 pcaData <- plotPCA(vsd, intgroup=c("genotype", "age"), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 ggplot(pcaData, aes(PC1, PC2, color=genotype, shape=age)) +
-  geom_point(size=3) +
+  geom_point(size=5) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
 ```
 
 In the PCA, we can see that there are large transcriptomic differences between 5-month and 20-month old frontal cortices. 
 Because the main focus of the analysis is the transcriptomic difference due to the genotype, we will analyze the 5-month and 20-month old cortex separately. 
-
-<br >
-
-<br />
 
 
 ```{r, warning=F, message=F}
@@ -111,14 +113,151 @@ for (age in unique(colData(ddsSE)$age)){
 
 ```
 
+<br >
+
+<br />
+
 ### **Visualize results**
 The most common way to visualize results of a differential gene expression experiment is the volcano plot. We can generate one very easily using this function. 
+It also allows you to highlight genes that you are interested in. 
 
-```{r volcano plot}
-volcano_plot(de_res = DGE_result$`5 months`, title = "5-month old frontal cortex", 
+```{r volcano plot, fig.width=7.1, fig.height=4}
+p1<-volcano_plot(de_res = DGE_result$`5 months`, title = "5-month old frontal cortex", 
              subtitle = "6 WT TDP43, 8 MT TDP43",  logFC_threshold = 0.25,
-             annotate_by = c("Col4a2", "Fgf12", "Meaf6"))
+             annotate_by = c("Col4a2", "Fgf12", "Meaf6"), xlim = c(-2,2))
+
+p2<-volcano_plot(de_res = DGE_result$`20 months`, title = "20-month old frontal cortex", 
+             subtitle = "8 WT TDP43, 10 MT TDP43",  logFC_threshold = 0.25,
+             annotate_by = c("Synrg", "Spop", "Meaf6"), xlim = c(-2,2))
+
+cowplot::plot_grid(p1, p2, labels = "auto")
+
 ```
+
+
+<br >
+
+<br />
+
+
+We can also check how similar the differential gene expression results are for the genes of differently aged frontal cortices. 
+
+```{r correlation plot, fig.width=7.36, fig.height=4.6}
+p1<-plot_de_correlation(result_df1 = DGE_result$`5 months`,
+                    result_df2 = DGE_result$`20 months`,
+                    title_result_1 = "5-month old frontal cortex",
+                    title_result_2 = "20-month old frontal cortex",
+                    col="stat") 
+
+p2<-plot_de_correlation(result_df1 = DGE_result$`5 months`,
+                    result_df2 = DGE_result$`20 months`,
+                    title_result_1 = "5-month old frontal cortex",
+                    title_result_2 = "20-month old frontal cortex",
+                    col="baseMean") 
+
+cowplot::plot_grid(p1, p2, labels = "auto")
+```
+
+<br >
+
+<br />
+
+Often it is useful to compare the expression of genes using boxplots.
+```{r boxplots, fig.width=7.3, fig.height=3.5}
+# For this, we first transform our raw counts to log2(CPM).
+assays(se)$cpm_counts <- edgeR::cpm(se, log=T)
+
+# We are only showing the results for the 5 month old frontal cortex
+se_5month <-se[,se$age == "5 months"]
+
+# Simple boxplot using a wilcoxon test to asses significance. THIS IS ONLY FOR VISUALIZATION PURPOSES! THIS P VALUE SHOULD NEVER BE USED
+p1<-create_expression_boxplot(gene = "Synrg", SE = se_5month, 
+                          intgroup = "genotype",
+                          test_comparison = list(c("MT","WT")), # optional
+                          ymin=6, # optional
+                          ymax=7, # optional
+                          colors = c("firebrick","steelblue")) #optional 
+
+
+# If we have the DESeq2 results, we can also use the more p value determined with DESeq2
+p2<-create_expression_boxplot(gene = "Synrg", SE = se_5month, 
+                          intgroup = "genotype",
+                          test_comparison = list(c("MT","WT")), # optional
+                          ymin=6, # optional
+                          ymax=7, # optional
+                          colors = c("firebrick","steelblue"), # optional
+                          DESEq_res = DGE_result$`5 months`) #optional 
+cowplot::plot_grid(p1, p2, labels = "auto")
+
+# It is also very easy to visualize a varity of different genes and save them all in a pdf document:
+plots <- list()
+gene_list <- c("Gid4", "Spop", "KRAS","Synrg") # any genes you want to visualize. Automatically skips genes that are not found.
+for(gene in gene_list){
+  print(gene)
+  p<-create_expression_boxplot(gene = gene, SE = se_5month, 
+                          intgroup = "genotype",
+                          test_comparison = list(c("MT","WT")), # optional
+                          colors = c("firebrick","steelblue"), # optional
+                          DESEq_res = DGE_result$`5 months`) #optional 
+
+
+
+  plots[[gene]] <- p
+}
+
+# save them all as one big pdf to disk.
+pdf_plot <- cowplot::plot_grid(plotlist = plots, ncol=2)
+
+# here we save it as a random temp file.
+out_file = tempfile(fileext = ".pdf")
+cowplot::save_plot(out_file, pdf_plot,  base_height = 4.7, ncol = 2,
+          nrow=ceiling(length(plots)/2),
+          limitsize = FALSE)
+```
+
+
+### Gene set enrichment analysis
+A common downstream analysis step of DGE analysis is gene set enrichment analysis (GSEA). 
+We are using gene sets from the MSigDB database, but one could just as well use different gene ontologies.
+
+```{r}
+# load the hall mark gene set for mouse
+h_gene_sets <- msigdbr::msigdbr(species = "mouse", category = "H") %>% 
+  dplyr::select(gs_name, ensembl_gene)
+
+# order our genes by logFC. In practice, it makes sense to run logFC shrinkage first from the DESeq2 package. We skip this here because it takes a while and downstream analysis is exactly the same.
+ranked_gene_list <- lapply(setNames(names(DGE_result),names(DGE_result)), function(age){
+  DGE_result[[age]] %>% 
+    dplyr::arrange(desc(log2FoldChange)) %>% 
+    dplyr::select(ensembl_id,log2FoldChange) %>% 
+    tibble::deframe()}
+  )
+
+# run GSEA and combine results in one dataframe
+GSEA_result <- lapply(setNames(names(DGE_result),names(DGE_result)), function(age){
+  tmp <- clusterProfiler::GSEA(ranked_gene_list[[age]], TERM2GENE=h_gene_sets, pvalueCutoff = 1)@result %>%
+    dplyr::mutate(age=age)
+}) %>% dplyr::bind_rows()
+
+
+enrichment_heatmap(gsea_df = GSEA_result, 
+                  top_n = 6,
+                  ordering = "20 months",
+                  comparisons_column = "age", 
+                  title = "Frontal Cortex",
+                  color = viridis::plasma(50,end=0.75),
+                  remove_string = "HALLMARK_") # remove uninformative string
+
+
+```
+
+
+
+
+
+
+
+
 
 
 

@@ -38,8 +38,11 @@ theme_jh <- function () {
 #'
 #'
 #' @import ggplot2
+#' @import dplyr
+#' @import magrittr
+#' @import tibble
+#' @import SummarizedExperiment
 #' @import grid
-#' @importFrom dplyr group_by tally
 #'
 #' @export
 volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NULL, annotation_size=5.2,
@@ -68,7 +71,8 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
 
 
   # get number of differentially expressed genes and determine position where they should be plotted.
-  de_tally <- de_res %>% group_by(sig, direction, class) %>% tally() %>%
+  de_tally <- de_res %>%
+    group_by(sig, direction, class) %>% tally() %>%
     dplyr::filter(sig != "non_sig") %>%
     dplyr::mutate(position = ifelse(sig == "sig", 0.5, 2) ) %>%
     dplyr::mutate(position = ifelse( direction == "down", -1 * position, position)) %>%
@@ -222,52 +226,27 @@ plot_de_correlation <- function(result_df1, result_df2,
 #' @description This function can be used to compare GSEA results performed for different tissues, different timepoints or conditions.
 #' It will generate a heatmap, where rows represent different gene sets and columns the different comparisons.
 #'
-#' @param gsea_df A dataframe which contains the results of \code{msdbulkseqtools::glattCameraPR}. For creation see \code{examples}
+#' @param gsea_df A dataframe which contains the results of \code{clusterProfiler::GSEA}.
 #' @param comparisons_column The name of the column which contains the different comparisons that you want to make.
-#' @param comparisons A vector of names which correspond to the columns of the heatmap (i.e. the conditions you want to compare).
 #' @param ordering By which condition should the p values of the displayed gene sets be ranked
 #' @param top_n The number of gene sets you want to display.
-#' @param data_src The data source for which you want to display the top enriched terms.
 #' @param color A colormap for the heatmap
 #' @param legend_title The title of the legend
 #' @param title The title of the heatmap
 #' @param remove_string A string that should be removed from all rownames of the heatmap.
 #' @param ... Arguments are directly passed to \code{ComplexHeatmap::Heatmap}
 #'
-#' @examples
-#' \dontrun{
-#'Also see vignette `Standard bulk RNA seq showcase`
-#' gsrc <- c("go_component","KEGG")
-#' gsea <- msdbulkseqtools::glattCameraPR(g_src = gsrc,
-#'                                       efit_list = res_list,
-#'                                       specie = "Hs",
-#'                                       g_cor_list = tcor_list,
-#'                                       gs_low = 5,
-#'                                       gs_high = 500)
-#'
-#' gsea_df <- lapply(gsea, function(Ontology){
-#'   lapply(names(Ontology), function(Tissue){
-#'     lapply(names(Ontology[[Tissue]]),function(Contrast){
-#'       Ontology[[Tissue]][[Contrast]] %>% mutate(contrast = Contrast)
-#'       }) %>% dplyr::bind_rows() %>% mutate(tissue = Tissue)
-#'    }) %>% bind_rows()
-#'  }) %>% bind_rows()
-#'
-#'enrichment_heatmap(gsea_df = gsea_df, comparisons = c("cervical","lumbar"),
-#'                   top_n = 20, data_src = "go_component", comparisons_column = "tissue",
-#'                   title = "Tissue comparison")
-#' }
 #' @export
-enrichment_heatmap <- function(gsea_df, comparisons_column, comparisons=NULL,
-                               ordering = NULL,top_n=10, data_src="KEGG",
+enrichment_heatmap <- function(gsea_df, comparisons_column,
+                               ordering = NULL,top_n=10,
                                color=viridis::plasma(50,end=0.75),
-                               legend_title="-log10(FDR)", title="",
+                               legend_title="-log10(FDR)",
+                               title="",
                                remove_string=NULL, ...){
 
 
   # this gets called by `cell_fun` of ComplexHeatmap and returns asteriscs according to p value.
   annotate_sig <- function(j, i, x, y, w, h, fill) {
-    # case_when thorws an error and i dont know why.. this works however
     if(is.na(wide_matrix[i, j])) {
       grid::grid.text("", x, y, gp=grid::gpar(col="white", fontsize=25))
     } else if(wide_matrix[i, j] > -log10(1e-4)) {
@@ -280,36 +259,25 @@ enrichment_heatmap <- function(gsea_df, comparisons_column, comparisons=NULL,
   }
 
 
-  # if no comparisons selected, take all values in the comparisons column
-  if(all(is.null(comparisons))){
-    comparisons <- unique(gsea_df[comparisons_column])
-  }
+  comparisons <- unique(gsea_df[[comparisons_column]])
 
   if (is.null(ordering)){
     ordering <- comparisons[1]
   }
 
-  if (sum(gsea_df$src == data_src) ==0){
-    stop("The 'data_src' you specified does not occure in 'gsea_df'")
-  }
-
-  subset <- gsea_df %>%
-    dplyr::filter(src == data_src)
-
   # get the top n enriched terms for a selected tissue
-  ontologies_of_interest <- subset %>%
+  ontologies_of_interest <- gsea_df %>%
     dplyr::filter(get(comparisons_column)==ordering)%>%
-    dplyr::arrange(FDR) %>%
+    dplyr::arrange(p.adjust) %>%
     slice_head(n=top_n) %>%
-    pull(SUID)
+    pull(ID)
 
   # get the p values of the selected ontologies for all other comparisons.
-  wide_df <- subset %>%
-    dplyr::filter(SUID %in% ontologies_of_interest) %>%
-    dplyr::select(c("SUID","Description", "neglog10FDR",comparisons_column)) %>%
+  wide_df <- gsea_df %>%
+    dplyr::filter(ID %in% ontologies_of_interest) %>%
+    dplyr::select(c("ID","Description", "p.adjust",comparisons_column)) %>%
     tidyr::pivot_wider(names_from = comparisons_column,
-                       values_from = neglog10FDR)
-
+                       values_from = p.adjust)
   # this matrix is necessary to annotate significance.
   wide_matrix <- wide_df %>%
     distinct(Description,.keep_all = T) %>%
@@ -321,8 +289,6 @@ enrichment_heatmap <- function(gsea_df, comparisons_column, comparisons=NULL,
   if (!is.null(remove_string)){
     rownames(wide_matrix) <- str_remove(rownames(wide_matrix), remove_string)
   }
-
-
   # Reformat the description, to make it more readable.
   wide_matrix <- wide_matrix %>%
     data.frame() %>%
@@ -330,8 +296,8 @@ enrichment_heatmap <- function(gsea_df, comparisons_column, comparisons=NULL,
     dplyr::mutate(name = str_replace_all(name, "_"," ")) %>%
     dplyr::mutate(name = str_wrap(name, 30)) %>%
     tibble::column_to_rownames("name") %>%
-    as.matrix()
-
+    as.matrix %>%
+    -log10(.)
 
   # calculate an appropriate width of the cells
   names_length <- max(nchar(colnames(wide_matrix)))
@@ -344,7 +310,6 @@ enrichment_heatmap <- function(gsea_df, comparisons_column, comparisons=NULL,
                                ...)
 
   return(p)
-
 }
 
 
@@ -446,19 +411,21 @@ gwena_heatmap <- function(scaled_counts, mdata, info_col,
 
 
 #' Create an expression boxplot to compare two conditions.
-#' @description Given a properly formatted \code{ExpresisonSet}, this function can quickly plot boxplots to investigate the expression of specific genes between two conditions.
-#' The \code{ExpresisonSet} can be easily generated from the \code{DGElist} which is used by \code{limma}. See example.
-#' @param gene The gene symbol of the gene for which the expression should be plotted. Must occur in the \code{symbol} column of \code{fData} of the \code{ExpressionSet}.
-#' @param eset The \code{ExpresisonSet}. For generation, see example.
-#' @param x_axis_groups Specify which two conditions should be compared
+#' @description Given a properly formatted \code{SummarizedExperiment.}, this function can quickly plot boxplots to investigate the expression of specific genes between two conditions.
+#' By default, CPM transformed counts are expected
+#'
+#' @param gene The gene symbol of the gene for which the expression should be plotted. Must occur in the \code{symbol} column of \code{rowData()} of the \code{SummarizedExperiment}.
+#' @param SE A SummarizedExperiment. Usually the same which was used to generate the DESEq2 object.
+#' @param intgroup Counts are grouped by this variable. Has to occur in \code{colData()} of the \code{SummarizedExperiment}.
 #' @param test_comparison Optionally, you can also specify if and how conditions should be compared. Should be a list which contains the comparisons that you are interested in.
 #' See examples and \href{https://cran.r-project.org/web/packages/ggsignif/vignettes/intro.html}{here}.
-#' @param limma_results By default, if you specify \code{test_comparison} a \code{wilcox.test} is performed.
-#' This might be fine to get an intuition if expression differences between two conditions
+#' @param DESEq_res By default, if you specify \code{test_comparison} a \code{wilcox.test} is performed.
+#'  This might be fine to get an intuition if expression differences between two conditions
 #'  are significantly different, but the proper way is to use the the p value that
-#'  was determined using \code{limma}. For that, you can simply specify an object that was created \code{msdbulkseqtools::toptable_for_all} that contains the correct contrast/comparison.
-#' @param colors Specify the colors of the boxplots. Number of colors must match number of factors in \code{x_axis_groups}.
-#' @param x_lab X axis label. Defaults to \code{x_axis_groups}
+#'  was determined using \code{DESeq}. For that, you can simply specify an object that was created \code{DESeq2::results()} that contains the correct contrast/comparison.
+#'  Also has to contain column \code{symbol}.
+#' @param colors Specify the colors of the boxplots. Number of colors must match number of factors in \code{intgroup}.
+#' @param x_lab X axis label. Defaults to \code{intgroup}
 #' @param y_lab Y axis label. Defaults to \code{log(CPM)}
 #' @param ymax Max value of the Y axis. Sometimes useful to pick a different value than the default.
 #' @param ymin Min value of the Y axis. Sometimes useful to pick a different value than the default.
@@ -467,59 +434,52 @@ gwena_heatmap <- function(scaled_counts, mdata, info_col,
 #'
 #' @examples
 #' \dontrun{
-#' See vignette `Standard bulk RNA seq showcase`
-#'
-#' eset <- ExpressionSet(assayData = counts, # Normalized counts
-#'        phenoData = AnnotatedDataFrame(mdata), # information about the samples
-#'        featureData = AnnotatedDataFrame(ann_uniq)) # information about the genes. Must have a \code{symbol} column which corresponds to gene name
-#'
-#'
-#' create_expression_boxplot(gene = "IGFBP5", eset = expressionSet,
-#' x_axis_groups = "sample.status",
-#' test_comparison = list(c("diseased","healthy")), # optional
-#' colors = c("firebrick","steelblue"), #optional
-#' x_lab = "Sample Phenotype", #optional
-#' ymax=11, ymin=5) #optional
+#' See vignette `rna_seq_workflow`
 #' }
 #'
 #' @export
 #'
-create_expression_boxplot <- function(gene, eset, x_axis_groups,
-                                      test_comparison=NULL, limma_results=NULL,
+create_expression_boxplot <- function(gene, SE, intgroup,
+                                      test_comparison=NULL, DESEq_res=NULL,
                                       colors=NULL, x_lab=ggplot2::waiver(),
                                       y_lab=expression(log[2](CPM)),
                                       ymax=NULL, ymin=NULL){
 
-  keep <- fData(eset)$symbol == gene
+  # subset the SummarizedExperiment to only include the gene of interest.
+
+  keep <- rowData(SE)$symbol == gene
+  keep[is.na(keep)] <- F
   if (sum(keep) == 0){
-    print("Gene symbol was not found in eset, returning empty plot")
+    print("Gene symbol was not found in SummarizedExperiment, returning empty plot")
     return()
   }
 
-  # check if the specified `test_comparisons` exist in the eset
+  # check if the specified `test_comparisons` exist in the SummarizedExperiment
   for (comparison in test_comparison %>% unlist()){
-    if (!(comparison %in% pData(eset)[x_axis_groups][,1])){
-      stop(paste0("The specified `test_comparison` (", comparison,") does not occure in `x_axis_groups`"))
+    if (!(comparison %in% colData(SE)[intgroup][,1])){
+      stop(paste0("The specified `test_comparison` (", comparison,") does not occure in `intgroup`"))
     }
   }
 
   # only keep information for the gene we are interested in.
-  subset_eset <- eset[keep,]
+  subset_SE <- SE[keep,]
 
-  # turn eset into a long df. Eset was basically required to perform effective selection of gene of interest.
-  counts <- t(exprs(subset_eset)) %>%
-    set_colnames(gene)
+  # turn SE into a long df. SE was basically required to perform effective selection of gene of interest.
+  if (!"cpm_counts" %in% names(assays(SE))){
+    stop("SummarizedExperiment should contain an assay called `cpm_counts`, which contains log2 CPM counts.")
+  }
 
-  # Do some sanity checks.
-  pdata <- pData(subset_eset)
-  stopifnot(rownames(counts)==rownames(pdata))
-  rownames(counts) <- NULL
-  rownames(pdata) <- NULL
-  fdata <- fData(subset_eset)
-  rownames(fdata) <- NULL
+  counts <- assays(subset_SE)$cpm_counts %>%
+    as.matrix() %>%
+    t() %>%
+    magrittr::set_colnames(gene)
 
   # create a long df which contains information about the expression as well as additional information such as description and meta data.
-  plot_df <- cbind(fdata,counts, pdata)
+  plot_df <- counts %>%
+    data.frame() %>%
+    rownames_to_column("ID") %>%
+    left_join(.,colData(subset_SE) %>% data.frame %>% rownames_to_column("ID"), by="ID")
+
 
   # in very few edgecases:
   if (n_distinct(colnames(plot_df))!=ncol(plot_df)){
@@ -527,14 +487,19 @@ create_expression_boxplot <- function(gene, eset, x_axis_groups,
   }
 
   # get gene description for the plot
-  gene_descr <- plot_df %>%
-    pull("description") %>%
-    head(1) %>%
-    str_wrap(40)
+  if ("description" %in% colnames(rowData(subset_SE))){
+    gene_descr <- rowData(subset_SE) %>%
+      data.frame() %>%
+      pull("description") %>%
+      str_wrap(30)
+  } else {
+    gene_descr=""
+  }
 
 
-  # make sure that the `x_axis_groups` are factors.
-  plot_df[,x_axis_groups] <- factor(plot_df[,x_axis_groups])
+
+  # make sure that the `intgroup` are factors.
+  plot_df[,intgroup] <- factor(plot_df[,intgroup])
 
   # If user did not specify anything try and determine appropriate  axis limits.
   # The thing is that we have to leave some space for the annotation (number of samples and significance),
@@ -560,7 +525,7 @@ create_expression_boxplot <- function(gene, eset, x_axis_groups,
     )
   } else {ymax=ymax}
 
-  p<-ggplot(plot_df, aes_string(x=x_axis_groups, y=gene, fill=x_axis_groups))+
+  p<-ggplot(plot_df, aes_string(x=intgroup, y=gene, fill=intgroup))+
     geom_boxplot(width=0.3)+
     geom_jitter(width=0.01,size=0.7)+
     ggtitle(paste0(gene," (",gene_descr,")"))+
@@ -571,49 +536,60 @@ create_expression_boxplot <- function(gene, eset, x_axis_groups,
           legend.position = "none") +
     ylab(y_lab)+
     xlab(x_lab)+
-    ggsignif::geom_signif(
+    ylim(ymin[1],ymax[1])+
+    stat_summary(fun.data = give.n, geom = "text", fun.args = list(ypos=ymin+0.3),size=6)
+
+  if (!is.null(test_comparison)){
+    p <- p +
+      ggsignif::geom_signif(
       comparisons = test_comparison,
       map_signif_level = F,
-      step_increase = 0.12
-    )+
-    ylim(ymin[1],ymax[1])+
-    stat_summary(fun.data = give.n, geom = "text", fun.args = list(ypos=ymin+0.8),size=6)
+      step_increase = 0.12)
+  }
 
   # if user specified colors, add them
   if (!is.null(colors)){p<-p+scale_fill_manual(values=colors)}
 
-  # if we do not have limma results, simply return the p value.
-  if (is.null(limma_results)){return(p)}
+  # if we do not have DESeq results, simply return the p value.
+  if (is.null(DESEq_res)){return(p)}
 
-  # if we did specify limma results check if gene is found.
-  if (nrow(limma_results %>% dplyr::filter(symbol==gene))==0){
-    print("Gene symbol was not found in limma result, returning plot with p value from wilcox.test")
+  # if we did specify DESeq results check if gene is found.
+  if (nrow(DESEq_res %>% dplyr::filter(symbol==gene))==0){
+    print("Gene symbol was not found in DESeq result, returning plot with p value from wilcox.test")
     return(p)
   }
 
-
-  # Do a work around to display the limma pvalue instead of the ggsignif pvalue.
+  # Do a work around to display the DESeq pvalue instead of the ggsignif pvalue.
   # deconstruct the plot
   p_deconstructed <- ggplot_build(p)
 
-  # get adjusted p value from limma
-  adj_p_vals <- limma_results %>%
+  # get adjusted p value from DESeq
+  adj_p_vals <- DESEq_res %>%
     dplyr::filter(symbol==gene) %>%
     pull(padj) %>%
     signif(., digits=3)
 
 
-  # now replace the ggsignif pvalue by the limma pvalue.
+  # now replace the ggsignif pvalue by the deseq2 pvalue.
   # Something very similar can be used also if you have multiple panels.
-  p_deconstructed$data[[3]] <- p_deconstructed$data[[3]]  %>%
-    dplyr::mutate(annotation = case_when(
-      PANEL == 1 ~ adj_p_vals[1]
-    ))
+  if ("annotation" %in% colnames( p_deconstructed$data[[4]])){
+    p_deconstructed$data[[4]] <- p_deconstructed$data[[4]]  %>%
+      dplyr::mutate(annotation = case_when(
+        PANEL == 1 ~ adj_p_vals[1]
+      ))
+  } else if ("annotation" %in% colnames( p_deconstructed$data[[3]])){
+    p_deconstructed$data[[3]] <- p_deconstructed$data[[3]]  %>%
+      dplyr::mutate(annotation = case_when(
+        PANEL == 1 ~ adj_p_vals[1]
+      ))
+  } else {
+    message("Make sure you have ggplot version 3.3.6 installed. Returning wilcoxon p value.")
+  }
 
   ## Reconstruct plot
-  myplot3 <- ggpubr::as_ggplot(ggplot_gtable(myplot2))
+  final_plot <- ggpubr::as_ggplot(ggplot_gtable(p_deconstructed))
 
-  return(myplot3)
+  return(final_plot)
 }
 
 # function to indicate number of samples per boxplot
