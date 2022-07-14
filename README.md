@@ -6,4 +6,4 @@ For example it allows you to easily plot pretty volcano plots or boxplots, compa
 ![plot_showcase](./imgs/combined.png)
 
 
-For detailed overview of all the functions, check out the [vignette](./doc/Example_RNAseq_workflow.html).
+For detailed overview of all the functions, check out the [vignette](./doc/).
