@@ -20,7 +20,7 @@ theme_jh <- function () {
 
 
 #' @title Plot a pretty volcano plot
-#' @description This function plots a pretty volcano plot using the results of the output of \code{DESeq2::results()}
+#' @description This function plots a pretty volcano plot using the results of the output of \code{DESeq2::results()}. Code was adapted from [here](https://github.com/jackhump/ALS_SpinalCord_QTLs).
 #'
 #' @param de_res A dataframe created using the \code{msdbulkseqtools::toptable_for_all} command. Alternatively a data frame
 #' containing the following columns: 'padj', 'log2FoldChange'
