@@ -6,4 +6,12 @@ For example it allows you to easily plot pretty volcano plots or boxplots, compa
 ![plot_showcase](./imgs/combined.png)
 
 
-For detailed overview of all the functions, check out the [vignette](./doc/).
+For detailed overview of all the functions, check out the [vignette](./doc/Example_RNAseq_workflow.html).
+
+## Installation
+Once the package is public, you can simply install it by running:
+
+```r
+devtools::install_github("nickhir/DGEvistools")
+```
+
