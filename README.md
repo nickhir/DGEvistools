@@ -1,3 +1,19 @@
+# DGEvistools
+
+This package provides functions, which ease the downstream analysis of differential gene expression analysis (using DESeq2).
+For example it allows you to easily plot pretty volcano plots or boxplots, compare GSEA results or visualize the results of weighted gene co-expression network analysis.
+
+For detailed overview of all the functions, see the basic workflow below.
+
+## Installation
+Once the package is public, you can simply install it by running:
+
+```r
+devtools::install_github("nickhir/DGEvistools")
+```
+
+## Exemplary Workflow
+
 -   [**Introduction**](#introduction)
 -   [**Differential gene expression
     analysis**](#differential-gene-expression-analysis)
@@ -5,7 +21,7 @@
     analysis**](#weighted-correlation-network-analysis)
 -   [**Session info**](#session-info)
 
-## **Introduction**
+### **Introduction**
 
 This vignette shows a very basic differential gene expression workflow
 and downstream analyses. The data that will be used comes from the [Gene
@@ -41,7 +57,7 @@ stopifnot(all(rownames(counts) == rownames(annotation)))
 
 <br />
 
-## **Differential gene expression analysis**
+### **Differential gene expression analysis**
 
 For the differential gene expression analysis we can use `DESEq2`. For
 that we create a `SummarizedExperiment`, which holds additional
@@ -105,7 +121,7 @@ for (age in unique(colData(ddsSE)$age)){
 
 <br />
 
-### **Visualize results**
+#### **Visualize results**
 
 The most common way to visualize results of a differential gene
 expression experiment is the volcano plot. We can generate one very
@@ -229,7 +245,7 @@ cowplot::save_plot(out_file, pdf_plot,  base_height = 4.7, ncol = 2,
           limitsize = FALSE)
 ```
 
-### Gene set enrichment analysis
+#### Gene set enrichment analysis
 
 A common downstream analysis step of DGE analysis is gene set enrichment
 analysis (GSEA). We are using gene sets from the MSigDB database, but
@@ -268,7 +284,7 @@ enrichment_heatmap(gsea_df = GSEA_result,
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-4-1.svg" style="display: block; margin: auto;" />
 
-## **Weighted correlation network analysis**
+### **Weighted correlation network analysis**
 
 Another potentially downstream analysis is Weighted correlation network
 analysis (WGCNA). For this we will use the GWENA pacakge which provides
@@ -354,7 +370,7 @@ gwena_heatmap(scaled_counts = scaled_counts,
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-5-1.svg" style="display: block; margin: auto;" />
 
-### **Associate modules with phenotype**
+#### **Associate modules with phenotype**
 
 To associate identified expression modules with phenotypes, it is useful
 to look at the *eigengene expression* of a sample. The *eigengene
@@ -411,7 +427,7 @@ pkgcond::suppress_messages(cowplot::plot_grid(p1,p2, labels="auto"))
 
 <br />
 
-## **Session info**
+### **Session info**
 
 ``` r
 sessionInfo()
