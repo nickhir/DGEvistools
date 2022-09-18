@@ -8,6 +8,7 @@ output:
     toc: true
     toc_depth: 2
     variant: markdown_github
+    dev: svg
 
 vignette: >
   %\VignetteIndexEntry{Example RNAseq workflow}

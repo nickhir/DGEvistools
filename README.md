@@ -73,7 +73,7 @@ ggplot(pcaData, aes(PC1, PC2, color=genotype, shape=age)) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
 ```
 
-<img src="README_files/figure-markdown_github/unnamed-chunk-2-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/unnamed-chunk-2-1.svg" style="display: block; margin: auto;" />
 
 In the PCA, we can see that there are large transcriptomic differences
 between 5-month and 20-month old frontal cortices. Because the main
@@ -124,7 +124,7 @@ p2<-volcano_plot(de_res = DGE_result$`20 months`, title = "20-month old frontal 
 cowplot::plot_grid(p1, p2, labels = "auto")
 ```
 
-<img src="README_files/figure-markdown_github/volcano plot-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/volcano plot-1.svg" style="display: block; margin: auto;" />
 
 <br >
 
@@ -157,7 +157,7 @@ p2<-plot_de_correlation(result_df1 = DGE_result$`5 months`,
 cowplot::plot_grid(p1, p2, labels = "auto")
 ```
 
-<img src="README_files/figure-markdown_github/correlation plot-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/correlation plot-1.svg" style="display: block; margin: auto;" />
 
 <br >
 
@@ -192,7 +192,7 @@ p2<-create_expression_boxplot(gene = "Synrg", SE = se_5month,
 cowplot::plot_grid(p1, p2, labels = "auto")
 ```
 
-<img src="README_files/figure-markdown_github/boxplots-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/boxplots-1.svg" style="display: block; margin: auto;" />
 
 ``` r
 # It is also very easy to visualize a varity of different genes and save them all in a pdf document:
@@ -266,7 +266,7 @@ enrichment_heatmap(gsea_df = GSEA_result,
                   remove_string = "HALLMARK_") # remove uninformative string
 ```
 
-<img src="README_files/figure-markdown_github/unnamed-chunk-4-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/unnamed-chunk-4-1.svg" style="display: block; margin: auto;" />
 
 ## **Weighted correlation network analysis**
 
@@ -332,7 +332,7 @@ gwena_heatmap(scaled_counts = scaled_counts,
               heatmap_annotation = ha)
 ```
 
-<img src="README_files/figure-markdown_github/WGCNA-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/WGCNA-1.svg" style="display: block; margin: auto;" />
 
 ``` r
 # It is also possible to split columns based on the results of a clustering algorithm:
@@ -352,7 +352,7 @@ gwena_heatmap(scaled_counts = scaled_counts,
               column_cluster = clustering_result)
 ```
 
-<img src="README_files/figure-markdown_github/unnamed-chunk-5-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/unnamed-chunk-5-1.svg" style="display: block; margin: auto;" />
 
 ### **Associate modules with phenotype**
 
@@ -405,7 +405,7 @@ p2<-module_association(mdata_eigengene = mdata_eigengene,
 pkgcond::suppress_messages(cowplot::plot_grid(p1,p2, labels="auto"))
 ```
 
-<img src="README_files/figure-markdown_github/module association-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-markdown_github/module association-1.svg" style="display: block; margin: auto;" />
 
 <br >
 
@@ -454,96 +454,89 @@ sessionInfo()
     #>   [5] data.table_1.14.2      rpart_4.1.16          
     #>   [7] KEGGREST_1.36.2        RCurl_1.98-1.7        
     #>   [9] doParallel_1.0.17      generics_0.1.3        
-    #>  [11] preprocessCore_1.58.0  snow_0.4-4            
-    #>  [13] callr_3.7.0            RhpcBLASctl_0.21-247.1
-    #>  [15] cowplot_1.1.1          usethis_2.1.6         
-    #>  [17] RSQLite_2.2.14         shadowtext_0.1.2      
-    #>  [19] rlist_0.4.6.2          bit_4.0.4             
-    #>  [21] tzdb_0.3.0             enrichplot_1.16.1     
-    #>  [23] xml2_1.3.3             lubridate_1.8.0       
-    #>  [25] assertthat_0.2.1       viridis_0.6.2         
-    #>  [27] xfun_0.31              hms_1.1.1             
-    #>  [29] jquerylib_0.1.4        babelgene_22.3        
-    #>  [31] evaluate_0.15          fansi_1.0.3           
-    #>  [33] dbplyr_2.2.1           readxl_1.4.0          
-    #>  [35] igraph_1.3.2           DBI_1.1.3             
-    #>  [37] geneplotter_1.74.0     htmlwidgets_1.5.4     
-    #>  [39] ellipsis_0.3.2         backports_1.4.1       
-    #>  [41] gprofiler2_0.2.1       annotate_1.74.0       
-    #>  [43] deldir_1.0-6           vctrs_0.4.1           
-    #>  [45] remotes_2.4.2          Cairo_1.6-0           
-    #>  [47] abind_1.4-5            cachem_1.0.6          
-    #>  [49] withr_2.5.0            ggforce_0.3.3         
-    #>  [51] checkmate_2.1.0        treeio_1.20.0         
-    #>  [53] prettyunits_1.1.1      cluster_2.1.3         
-    #>  [55] DOSE_3.22.0            ape_5.6-2             
-    #>  [57] lazyeval_0.2.2         crayon_1.5.1          
-    #>  [59] genefilter_1.78.0      edgeR_3.38.1          
-    #>  [61] pkgconfig_2.0.3        labeling_0.4.2        
-    #>  [63] tweenr_1.0.2           pkgload_1.3.0         
-    #>  [65] nlme_3.1-158           vipor_0.4.5           
-    #>  [67] devtools_2.4.3         nnet_7.3-17           
-    #>  [69] rlang_1.0.3            lifecycle_1.0.1       
-    #>  [71] downloader_0.4         modelr_0.1.8          
-    #>  [73] ggrastr_1.0.1          cellranger_1.1.0      
-    #>  [75] polyclip_1.10-0        Matrix_1.4-1          
-    #>  [77] aplot_0.1.6            NetRep_1.2.4          
-    #>  [79] carData_3.0-5          reprex_2.0.1          
-    #>  [81] base64enc_0.1-3        beeswarm_0.4.0        
-    #>  [83] processx_3.6.1         GlobalOptions_0.1.2   
-    #>  [85] png_0.1-7              viridisLite_0.4.0     
-    #>  [87] rjson_0.2.21           bitops_1.0-7          
-    #>  [89] Biostrings_2.64.0      blob_1.2.3            
-    #>  [91] shape_1.4.6            qvalue_2.28.0         
-    #>  [93] jpeg_0.1-9             rstatix_0.7.0         
-    #>  [95] gridGraphics_0.5-1     ggsignif_0.6.3        
-    #>  [97] scales_1.2.0           memoise_2.0.1         
-    #>  [99] magrittr_2.0.3         plyr_1.8.7            
-    #> [101] zlibbioc_1.42.0        compiler_4.2.1        
-    #> [103] scatterpie_0.1.7       RColorBrewer_1.1-3    
-    #> [105] clue_0.3-61            cli_3.3.0             
-    #> [107] XVector_0.36.0         ps_1.7.1              
-    #> [109] patchwork_1.1.1        htmlTable_2.4.0       
-    #> [111] Formula_1.2-4          mgcv_1.8-40           
-    #> [113] MASS_7.3-57            WGCNA_1.71            
-    #> [115] tidyselect_1.1.2       stringi_1.7.6         
-    #> [117] textshaping_0.3.6      pkgcond_0.1.1         
-    #> [119] highr_0.9              yaml_2.3.5            
-    #> [121] GOSemSim_2.22.0        locfit_1.5-9.5        
-    #> [123] latticeExtra_0.6-30    ggrepel_0.9.1         
-    #> [125] sass_0.4.1             fastmatch_1.1-3       
-    #> [127] tools_4.2.1            parallel_4.2.1        
-    #> [129] circlize_0.4.15        rstudioapi_0.13       
-    #> [131] foreach_1.5.2          foreign_0.8-82        
-    #> [133] gridExtra_2.3          farver_2.1.1          
-    #> [135] ggraph_2.0.5           digest_0.6.29         
-    #> [137] Rcpp_1.0.8.3           car_3.1-0             
-    #> [139] broom_1.0.0            httr_1.4.3            
-    #> [141] AnnotationDbi_1.58.0   colorspace_2.0-3      
-    #> [143] rvest_1.0.2            XML_3.99-0.10         
-    #> [145] fs_1.5.2               splines_4.2.1         
-    #> [147] yulab.utils_0.0.5      statmod_1.4.36        
-    #> [149] tidytree_0.3.9         graphlayouts_0.8.0    
-    #> [151] ggplotify_0.1.0        sessioninfo_1.2.2     
-    #> [153] plotly_4.10.0          systemfonts_1.0.4     
-    #> [155] xtable_1.8-4           jsonlite_1.8.0        
-    #> [157] ggtree_3.4.0           dynamicTreeCut_1.63-1 
-    #> [159] tidygraph_1.2.1        ggfun_0.0.6           
-    #> [161] R6_2.5.1               Hmisc_4.7-0           
-    #> [163] pillar_1.7.0           htmltools_0.5.2       
-    #> [165] glue_1.6.2             fastmap_1.1.0         
-    #> [167] clusterProfiler_4.4.4  BiocParallel_1.30.3   
-    #> [169] codetools_0.2-18       fgsea_1.22.0          
-    #> [171] pkgbuild_1.3.1         utf8_1.2.2            
-    #> [173] lattice_0.20-45        bslib_0.3.1           
-    #> [175] ggbeeswarm_0.6.0       GO.db_3.15.0          
-    #> [177] interp_1.1-2           survival_3.3-1        
-    #> [179] limma_3.52.2           rmarkdown_2.14        
-    #> [181] munsell_0.5.0          DO.db_2.9             
-    #> [183] GetoptLong_1.0.5       fastcluster_1.2.3     
-    #> [185] GenomeInfoDbData_1.2.8 iterators_1.0.14      
-    #> [187] impute_1.70.0          haven_2.5.0           
-    #> [189] reshape2_1.4.4         gtable_0.3.0          
-    #> [191] msigdbr_7.5.1
+    #>  [11] snow_0.4-4             preprocessCore_1.58.0 
+    #>  [13] RhpcBLASctl_0.21-247.1 cowplot_1.1.1         
+    #>  [15] RSQLite_2.2.14         shadowtext_0.1.2      
+    #>  [17] rlist_0.4.6.2          bit_4.0.4             
+    #>  [19] tzdb_0.3.0             enrichplot_1.16.1     
+    #>  [21] xml2_1.3.3             lubridate_1.8.0       
+    #>  [23] assertthat_0.2.1       viridis_0.6.2         
+    #>  [25] xfun_0.31              hms_1.1.1             
+    #>  [27] babelgene_22.3         evaluate_0.15         
+    #>  [29] fansi_1.0.3            dbplyr_2.2.1          
+    #>  [31] readxl_1.4.0           igraph_1.3.2          
+    #>  [33] DBI_1.1.3              geneplotter_1.74.0    
+    #>  [35] htmlwidgets_1.5.4      ellipsis_0.3.2        
+    #>  [37] backports_1.4.1        gprofiler2_0.2.1      
+    #>  [39] annotate_1.74.0        deldir_1.0-6          
+    #>  [41] vctrs_0.4.1            Cairo_1.6-0           
+    #>  [43] abind_1.4-5            cachem_1.0.6          
+    #>  [45] withr_2.5.0            ggforce_0.3.3         
+    #>  [47] checkmate_2.1.0        treeio_1.20.0         
+    #>  [49] cluster_2.1.3          DOSE_3.22.0           
+    #>  [51] ape_5.6-2              lazyeval_0.2.2        
+    #>  [53] crayon_1.5.1           genefilter_1.78.0     
+    #>  [55] edgeR_3.38.1           pkgconfig_2.0.3       
+    #>  [57] labeling_0.4.2         tweenr_1.0.2          
+    #>  [59] nlme_3.1-158           vipor_0.4.5           
+    #>  [61] nnet_7.3-17            rlang_1.0.3           
+    #>  [63] lifecycle_1.0.1        downloader_0.4        
+    #>  [65] modelr_0.1.8           ggrastr_1.0.1         
+    #>  [67] cellranger_1.1.0       polyclip_1.10-0       
+    #>  [69] Matrix_1.4-1           aplot_0.1.6           
+    #>  [71] NetRep_1.2.4           carData_3.0-5         
+    #>  [73] reprex_2.0.1           base64enc_0.1-3       
+    #>  [75] beeswarm_0.4.0         GlobalOptions_0.1.2   
+    #>  [77] png_0.1-7              viridisLite_0.4.0     
+    #>  [79] rjson_0.2.21           bitops_1.0-7          
+    #>  [81] Biostrings_2.64.0      blob_1.2.3            
+    #>  [83] shape_1.4.6            qvalue_2.28.0         
+    #>  [85] jpeg_0.1-9             rstatix_0.7.0         
+    #>  [87] gridGraphics_0.5-1     ggsignif_0.6.3        
+    #>  [89] scales_1.2.0           memoise_2.0.1         
+    #>  [91] magrittr_2.0.3         plyr_1.8.7            
+    #>  [93] zlibbioc_1.42.0        compiler_4.2.1        
+    #>  [95] scatterpie_0.1.7       RColorBrewer_1.1-3    
+    #>  [97] clue_0.3-61            cli_3.3.0             
+    #>  [99] XVector_0.36.0         patchwork_1.1.1       
+    #> [101] htmlTable_2.4.0        Formula_1.2-4         
+    #> [103] mgcv_1.8-40            MASS_7.3-57           
+    #> [105] WGCNA_1.71             tidyselect_1.1.2      
+    #> [107] stringi_1.7.6          textshaping_0.3.6     
+    #> [109] pkgcond_0.1.1          highr_0.9             
+    #> [111] yaml_2.3.5             GOSemSim_2.22.0       
+    #> [113] locfit_1.5-9.5         latticeExtra_0.6-30   
+    #> [115] ggrepel_0.9.1          fastmatch_1.1-3       
+    #> [117] tools_4.2.1            parallel_4.2.1        
+    #> [119] circlize_0.4.15        rstudioapi_0.13       
+    #> [121] foreach_1.5.2          foreign_0.8-82        
+    #> [123] gridExtra_2.3          farver_2.1.1          
+    #> [125] ggraph_2.0.5           digest_0.6.29         
+    #> [127] Rcpp_1.0.8.3           car_3.1-0             
+    #> [129] broom_1.0.0            httr_1.4.3            
+    #> [131] AnnotationDbi_1.58.0   colorspace_2.0-3      
+    #> [133] rvest_1.0.2            XML_3.99-0.10         
+    #> [135] fs_1.5.2               splines_4.2.1         
+    #> [137] yulab.utils_0.0.5      statmod_1.4.36        
+    #> [139] tidytree_0.3.9         graphlayouts_0.8.0    
+    #> [141] ggplotify_0.1.0        plotly_4.10.0         
+    #> [143] systemfonts_1.0.4      xtable_1.8-4          
+    #> [145] jsonlite_1.8.0         ggtree_3.4.0          
+    #> [147] dynamicTreeCut_1.63-1  tidygraph_1.2.1       
+    #> [149] ggfun_0.0.6            R6_2.5.1              
+    #> [151] Hmisc_4.7-0            pillar_1.7.0          
+    #> [153] htmltools_0.5.2        glue_1.6.2            
+    #> [155] fastmap_1.1.0          clusterProfiler_4.4.4 
+    #> [157] BiocParallel_1.30.3    codetools_0.2-18      
+    #> [159] fgsea_1.22.0           utf8_1.2.2            
+    #> [161] lattice_0.20-45        ggbeeswarm_0.6.0      
+    #> [163] GO.db_3.15.0           interp_1.1-2          
+    #> [165] survival_3.3-1         limma_3.52.2          
+    #> [167] rmarkdown_2.14         munsell_0.5.0         
+    #> [169] DO.db_2.9              GetoptLong_1.0.5      
+    #> [171] fastcluster_1.2.3      GenomeInfoDbData_1.2.8
+    #> [173] iterators_1.0.14       impute_1.70.0         
+    #> [175] haven_2.5.0            reshape2_1.4.4        
+    #> [177] gtable_0.3.0           msigdbr_7.5.1
 
 [1] European Molecular Biology Laboratory, <nick.hirschmueller@embl.de>
