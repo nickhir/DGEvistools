@@ -1,7 +1,7 @@
 #####
-# basic theme
+# Plotting themes
 #####
-theme_jh <- function () {
+theme_volcano <- function () {
   theme_bw() %+replace%
     theme(
       panel.grid = element_blank(),
@@ -16,6 +16,38 @@ theme_jh <- function () {
       legend.key = element_rect(fill="transparent", colour=NA),
       axis.line.y = element_line(), strip.text.x = element_text(face = "bold", margin = margin(t = 2,r = 0,b = 2,l=0))
     )
+}
+
+# this theme is taken from https://github.com/koundy/geom_roc_plot/blob/master/Theme_Publication.R
+theme_Publication <- function(base_size=14, base_family="sans") {
+  library(grid)
+  library(ggthemes)
+  (theme_foundation(base_size=base_size, base_family=base_family)
+    + theme(plot.title = element_text(face = "bold",
+                                      size = rel(1.2), hjust = 0.5),
+            text = element_text(),
+            panel.background = element_rect(colour = NA),
+            plot.background = element_rect(colour = NA),
+            panel.border = element_rect(colour = NA),
+            axis.title = element_text(face = "bold",size = rel(1)),
+            axis.title.y = element_text(angle=90,vjust =2),
+            axis.title.x = element_text(vjust = -0.2),
+            axis.text = element_text(),
+            axis.line.x = element_line(colour="black"),
+            axis.line.y = element_line(colour="black"),
+            axis.ticks = element_line(),
+            panel.grid.major = element_line(colour="#f0f0f0"),
+            panel.grid.minor = element_blank(),
+            legend.key = element_rect(colour = NA),
+            legend.position = "bottom",
+            legend.direction = "horizontal",
+            legend.key.size= unit(0.4, "cm"),
+            legend.title = element_text(face="italic"),
+            plot.margin=unit(c(10,5,5,5),"mm"),
+            strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+            strip.text = element_text(face="bold")
+    ))
+
 }
 
 
@@ -43,6 +75,7 @@ theme_jh <- function () {
 #' @import tibble
 #' @import SummarizedExperiment
 #' @import grid
+#' @import ggthemes
 #'
 #' @export
 volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NULL, annotation_size=5.2,
@@ -99,7 +132,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
     labs(y = expression(-log[10]~adj~P~value), x = expression(log[2]~"(fold change)"), title = title, subtitle = subtitle) +
     guides(colour = "none") +
     scale_y_continuous(expand = c(0,0), limits = c(0,ymax)) +
-    theme_jh() +
+    theme_volcano() +
     theme(
       plot.title = element_text(hjust = 0.5, size = 19),
       plot.subtitle = element_text(hjust = 0.5, size=14),
@@ -215,7 +248,7 @@ plot_de_correlation <- function(result_df1, result_df2,
     geom_bin2d(bins = 300) +
     scale_fill_continuous(type = "viridis") +
     guides(fill = "none") +
-    theme_jh() %+%
+    theme_Publication() %+%
     theme(axis.title = element_text(size=15), axis.text = element_text(size=12))
 
   return(plot)
@@ -521,11 +554,7 @@ create_expression_boxplot <- function(gene, SE, intgroup,
     geom_boxplot(width=0.3)+
     geom_jitter(width=0.01,size=0.7)+
     ggtitle(paste0(gene," (",gene_descr,")"))+
-    theme_bw()+
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1,size = 10,face="bold"),
-          plot.title = element_text(hjust=0.5, face="bold"),
-          strip.text.x = element_text(size = 10,face="bold"),
-          legend.position = "none") +
+    theme_Publication()+
     ylab(y_lab)+
     xlab(x_lab)+
     ylim(ymin[1],ymax[1])+
@@ -656,9 +685,7 @@ module_association <- function(mdata_eigengene, phenotype, module_eigengene,
       stat_cor(label.x=label_x_pos, label.y = label_y_pos, size = label_size)+
       xlab(xlab)+
       ylab(ylab)+
-      theme(legend.position = "none",
-            axis.text = element_text(size=16),
-            axis.title = element_text(size=18))
+      theme_Publication()
     return(p)
   } else {
 
@@ -692,10 +719,7 @@ module_association <- function(mdata_eigengene, phenotype, module_eigengene,
       geom_boxplot(width=0.4)+
       xlab(xlab)+
       ylab(ylab)+
-      theme_bw()+
-      theme(legend.position = "none",
-            axis.text = element_text(size=16),
-            axis.title = element_text(size=18))+
+      theme_Publication()+
       ggsignif::geom_signif(comparisons = comparison,
                             map_signif_level = F,
                             test="wilcox.test",

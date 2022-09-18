@@ -1,7 +1,7 @@
 ---
 title: "Example RNAseq workflow"
-author: "Nick Hirschmüller"
-contact: "hirschmueller.nick@gmail.com"
+author: 
+  - Nick Hirschmüller^[European Molecular Biology Laboratory, nick.hirschmueller@embl.de]
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document:
@@ -127,7 +127,7 @@ p1<-volcano_plot(de_res = DGE_result$`5 months`, title = "5-month old frontal co
 
 p2<-volcano_plot(de_res = DGE_result$`20 months`, title = "20-month old frontal cortex", 
              subtitle = "8 WT TDP43, 10 MT TDP43",  logFC_threshold = 0.25,
-             annotate_by = c("Synrg", "Spop", "Meaf6"), xlim = c(-2,2))
+             annotate_by = c("Synrg", "Spop", "Kras"), xlim = c(-2,2))
 
 cowplot::plot_grid(p1, p2, labels = "auto")
 
@@ -150,8 +150,8 @@ p1<-plot_de_correlation(result_df1 = DGE_result$`5 months`,
 
 p2<-plot_de_correlation(result_df1 = DGE_result$`5 months`,
                     result_df2 = DGE_result$`20 months`,
-                    title_result_1 = "5-month old frontal cortex",
-                    title_result_2 = "20-month old frontal cortex",
+                    title_result_1 = "Base expression\n5-month FC",
+                    title_result_2 = "Base expression\n20-month FC",
                     col="baseMean") 
 
 cowplot::plot_grid(p1, p2, labels = "auto")
@@ -162,7 +162,7 @@ cowplot::plot_grid(p1, p2, labels = "auto")
 <br />
 
 Often it is useful to compare the expression of genes using boxplots.
-```{r boxplots, fig.width=7.3, fig.height=3.5}
+```{r boxplots, fig.width=8.5, fig.height=5}
 # For this, we first transform our raw counts to log2(CPM).
 assays(se)$cpm_counts <- edgeR::cpm(se, log=T)
 
@@ -178,7 +178,7 @@ p1<-create_expression_boxplot(gene = "Synrg", SE = se_5month,
                           colors = c("firebrick","steelblue")) #optional 
 
 
-# If we have the DESeq2 results, we can also use the more p value determined with DESeq2
+# If we have the DESeq2 results, we can also use the p value determined with DESeq2
 p2<-create_expression_boxplot(gene = "Synrg", SE = se_5month, 
                           intgroup = "genotype",
                           test_comparison = list(c("MT","WT")), # optional
@@ -265,8 +265,7 @@ library(GWENA)
 
 # build net. On a real world data set this might take a long time.
 vst_counts_20_month <- assay(vsd[,vsd$age == "20 months"])
-net <- build_net(t(vst_counts_20_month), cor_func = "pearson", network_type="signed",
-                         n_threads = 5)
+net <- build_net(t(vst_counts_20_month), cor_func = "pearson", network_type="signed", n_threads=1)
 
 # detect modules. You might want to try out different thresholds.
 # you can also perform an overrepresentation analysis with the genes of the different modules, to get insights 
@@ -357,7 +356,7 @@ mdata_eigengene <- modules$modules_eigengenes %>%
 p1<-module_association(mdata_eigengene = mdata_eigengene,
                    phenotype = "genotype",
                    module_eigengene = "ME2",
-                   xlab = "Sample status",
+                   xlab = "Genotype",
                    ylab= "Module 2\neigengene epxression",
                    colors=c("firebrick","steelblue"))
 
