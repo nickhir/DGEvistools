@@ -6,7 +6,7 @@ For example it allows you to easily plot pretty volcano plots or boxplots, compa
 For detailed overview of all the functions, see the basic workflow below.
 
 ## Installation
-Once the package is public, you can simply install it by running:
+You can install the package by simply running:
 
 ```r
 devtools::install_github("nickhir/DGEvistools")
@@ -30,7 +30,7 @@ GSE99354](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE99354)
 and contains bulk RNA sequencing data from mice.
 
 Among other things, the authors examined gene expression differences
-between WT mice and mice carrying a TDP-43 Q331K mutation in 5-month or
+between WT mice and mice carrying a TDP-43<sup>Q331K </sup>mutation in 5-month or
 20-month old frontal cortex tissue, respectively.
 
 ``` r
@@ -54,8 +54,6 @@ stopifnot(all(rownames(counts) == rownames(annotation)))
 ```
 
 <br >
-
-<br />
 
 ### **Differential gene expression analysis**
 
@@ -121,7 +119,7 @@ for (age in unique(colData(ddsSE)$age)){
 
 <br />
 
-#### **Visualize results**
+### **Visualize results**
 
 The most common way to visualize results of a differential gene
 expression experiment is the volcano plot. We can generate one very
@@ -245,7 +243,7 @@ cowplot::save_plot(out_file, pdf_plot,  base_height = 4.7, ncol = 2,
           limitsize = FALSE)
 ```
 
-#### Gene set enrichment analysis
+### Gene set enrichment analysis
 
 A common downstream analysis step of DGE analysis is gene set enrichment
 analysis (GSEA). We are using gene sets from the MSigDB database, but
@@ -370,7 +368,7 @@ gwena_heatmap(scaled_counts = scaled_counts,
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-5-1.svg" style="display: block; margin: auto;" />
 
-#### **Associate modules with phenotype**
+### **Associate modules with phenotype**
 
 To associate identified expression modules with phenotypes, it is useful
 to look at the *eigengene expression* of a sample. The *eigengene
@@ -385,8 +383,6 @@ modules <- readRDS(module_save_path)
 
 # add a random contionus clinical variable
 mdata$survival_time <- runif(nrow(mdata), min = 2, 5)
-
-
 
 # add the eigengene expression to the metadata
 mdata_eigengene <- modules$modules_eigengenes %>% 
@@ -427,7 +423,7 @@ pkgcond::suppress_messages(cowplot::plot_grid(p1,p2, labels="auto"))
 
 <br />
 
-### **Session info**
+## **Session info**
 
 ``` r
 sessionInfo()
