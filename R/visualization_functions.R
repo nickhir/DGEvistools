@@ -66,6 +66,7 @@ theme_Publication <- function(base_size=14, base_family="sans") {
 #' @param ymax Maximum of the y axis
 #' @param xlim The x axis limits.
 #' @param res Resolution of the plot. The higher the resolution, the longer takes the plot.
+#' @param min_pval_cutoff All p values that are smaller than \code{min_pval_cutoff} will be set to \code{min_pval_cutoff} for the visualization
 #' @return A ggplot of a volcano plot.
 #'
 #'
@@ -79,7 +80,8 @@ theme_Publication <- function(base_size=14, base_family="sans") {
 #'
 #' @export
 volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NULL, annotation_size=5.2,
-                         padj_threshold=0.05, logFC_threshold=1, ymax=NULL, xlim=c(-3,3), res=300){
+                         padj_threshold=0.05, logFC_threshold=1, ymax=NULL, xlim=c(-3,3), res=300,
+                         min_pval_cutoff=1e-16){
 
   # check if all required columns exist.
   if (!all(c("padj","log2FoldChange") %in% colnames(de_res))){
@@ -113,12 +115,12 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
 
   # determine a suitable ymax if none was specified
   if (is.null(ymax)){
-    ymax <- ifelse(min(de_res$padj, na.rm=T) < 1e-16, 18, -log10(min(de_res$padj, na.rm=T))+2)
+    ymax <- -log10(min(de_res$padj, na.rm=T))+2
   }
 
   # generate the volcano plot
   plot <- de_res %>%
-    dplyr::mutate(padj = ifelse(padj < 1e-16, 1e-16, padj)) %>% #threshold at 1e16
+    dplyr::mutate(padj = ifelse(padj < min_pval_cutoff, min_pval_cutoff, padj)) %>% #threshold at 1e16
     ggplot(aes(x = log2FoldChange, y = -log10(padj))) +
     #geom_point(aes(colour = class ), size = 0.5) +
     ggrastr::rasterise(geom_point(aes(colour = class), size = 0.8), dpi = res) + # otherwise if we plot thousands of individual points takes to long
