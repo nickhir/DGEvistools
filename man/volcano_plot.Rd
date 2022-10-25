@@ -14,7 +14,8 @@ volcano_plot(
   logFC_threshold = 1,
   ymax = NULL,
   xlim = c(-3, 3),
-  res = 300
+  res = 300,
+  min_pval_cutoff = 1e-16
 )
 }
 \arguments{
@@ -39,10 +40,12 @@ Gene names have to occur in the 'symbol' column of 'de_res'}
 \item{xlim}{The x axis limits.}
 
 \item{res}{Resolution of the plot. The higher the resolution, the longer takes the plot.}
+
+\item{min_pval_cutoff}{All p values that are smaller than \code{min_pval_cutoff} will be set to \code{min_pval_cutoff} for the visualization}
 }
 \value{
 A ggplot of a volcano plot.
 }
 \description{
-This function plots a pretty volcano plot using the results of the output of \code{DESeq2::results()}
+This function plots a pretty volcano plot using the results of the output of \code{DESeq2::results()}. Code was adapted from [here](https://github.com/jackhump/ALS_SpinalCord_QTLs).
 }
