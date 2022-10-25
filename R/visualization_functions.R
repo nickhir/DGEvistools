@@ -478,6 +478,8 @@ create_expression_boxplot <- function(gene, SE, intgroup,
 
   keep <- rowData(SE)$symbol == gene
   keep[is.na(keep)] <- F
+  # sometimes gene names contain - or / or whatnot.. this is not optimal for R so we change it
+  r_gene <- make.names(r_gene)
   if (sum(keep) == 0){
     print("Gene symbol was not found in SummarizedExperiment, returning empty plot")
     return()
@@ -501,7 +503,7 @@ create_expression_boxplot <- function(gene, SE, intgroup,
   counts <- assays(subset_SE)$cpm_counts %>%
     as.matrix() %>%
     t() %>%
-    magrittr::set_colnames(gene)
+    magrittr::set_colnames(r_gene)
 
   # create a long df which contains information about the expression as well as additional information such as description and meta data.
   plot_df <- counts %>%
@@ -535,15 +537,15 @@ create_expression_boxplot <- function(gene, SE, intgroup,
   # so the default values ggplot picks might be unsuitable.
   if(is.null(ymin)){
     ymin <- plot_df %>%
-      slice_min(get(gene),n=1) %>%
-      pull(gene) - 1.5
+      slice_min(get(r_gene),n=1) %>%
+      pull(r_gene) - 1.5
   } else{ymin=ymin}
 
   # this can clearly be optimized but seem to work fine for now. Also user can just pick what looks good...
   if (is.null(ymax)){
     ymax <- plot_df %>%
-      slice_max(get(gene),n=1) %>%
-      pull(gene) + 0.5
+      slice_max(get(r_gene),n=1) %>%
+      pull(r_gene) + 0.5
 
     ymax <- case_when(
       ymax > 5 ~ ymax + 1,
@@ -554,7 +556,7 @@ create_expression_boxplot <- function(gene, SE, intgroup,
     )
   } else {ymax=ymax}
 
-  p<-ggplot(plot_df, aes_string(x=intgroup, y=gene, fill=intgroup))+
+  p<-ggplot(plot_df, aes_string(x=intgroup, y=r_gene, fill=intgroup))+
     geom_boxplot(width=0.3)+
     geom_jitter(width=0.01,size=0.7)+
     ggtitle(paste0(gene," (",gene_descr,")"))+
@@ -577,6 +579,12 @@ create_expression_boxplot <- function(gene, SE, intgroup,
 
   # if we do not have DESeq results, simply return the p value.
   if (is.null(DESEq_res)){return(p)}
+
+  DESEq_res <- DESEq_res %>% data.frame()
+
+  if (! "symbol" %in% DESEq_res){
+    DESEq_res <- DESEq_res %>% rownames_to_column("symbol")
+  }
 
   # if we did specify DESeq results check if gene is found.
   if (nrow(DESEq_res %>% dplyr::filter(symbol==gene))==0){
