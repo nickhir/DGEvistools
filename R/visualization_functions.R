@@ -479,7 +479,7 @@ create_expression_boxplot <- function(gene, SE, intgroup,
   keep <- rowData(SE)$symbol == gene
   keep[is.na(keep)] <- F
   # sometimes gene names contain - or / or whatnot.. this is not optimal for R so we change it
-  r_gene <- make.names(r_gene)
+  r_gene <- make.names(gene)
   if (sum(keep) == 0){
     print("Gene symbol was not found in SummarizedExperiment, returning empty plot")
     return()
@@ -559,19 +559,24 @@ create_expression_boxplot <- function(gene, SE, intgroup,
   p<-ggplot(plot_df, aes_string(x=intgroup, y=r_gene, fill=intgroup))+
     geom_boxplot(width=0.3)+
     geom_jitter(width=0.01,size=0.7)+
-    ggtitle(paste0(gene," (",gene_descr,")"))+
     theme_Publication()+
     ylab(y_lab)+
     xlab(x_lab)+
     ylim(ymin[1],ymax[1])+
     stat_summary(fun.data = give.n, geom = "text", fun.args = list(ypos=ymin+0.3),size=6)
 
+  if (gene_descr != ""){
+    p <- p + ggtitle(paste0(gene," (",gene_descr,")"))
+  } else {
+    p <- p + ggtitle(gene)
+  }
+
   if (!is.null(test_comparison)){
     p <- p +
       ggsignif::geom_signif(
-      comparisons = test_comparison,
-      map_signif_level = F,
-      step_increase = 0.12)
+        comparisons = test_comparison,
+        map_signif_level = F,
+        step_increase = 0.12)
   }
 
   # if user specified colors, add them
@@ -585,13 +590,11 @@ create_expression_boxplot <- function(gene, SE, intgroup,
   if (! "symbol" %in% DESEq_res){
     DESEq_res <- DESEq_res %>% rownames_to_column("symbol")
   }
-
   # if we did specify DESeq results check if gene is found.
   if (nrow(DESEq_res %>% dplyr::filter(symbol==gene))==0){
     print("Gene symbol was not found in DESeq result, returning plot with p value from wilcox.test")
     return(p)
   }
-
   # Do a work around to display the DESeq pvalue instead of the ggsignif pvalue.
   # deconstruct the plot
   p_deconstructed <- ggplot_build(p)
@@ -601,6 +604,7 @@ create_expression_boxplot <- function(gene, SE, intgroup,
     dplyr::filter(symbol==gene) %>%
     pull(padj) %>%
     signif(., digits=3)
+
 
 
   # now replace the ggsignif pvalue by the deseq2 pvalue.
