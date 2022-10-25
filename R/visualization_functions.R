@@ -116,7 +116,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
   # determine a suitable ymax if none was specified
   if (is.null(ymax)){
     ymax <- ifelse(min(de_res$padj, na.rm=T) < min_pval_cutoff,
-                   min_pval_cutoff+0.05,
+                   -log10(min_pval_cutoff)+0.05,
                    -log10(min(de_res$padj, na.rm=T))+2)
   }
 
