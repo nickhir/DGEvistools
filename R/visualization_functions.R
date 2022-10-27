@@ -99,8 +99,8 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
     dplyr::mutate(direction = ifelse(log2FoldChange > 0, "up", "down")) %>%
     dplyr::mutate(class = paste(sig, direction)) %>%
     dplyr::mutate(log2FoldChange = case_when(
-      log2FoldChange > 3 ~ Inf,
-      log2FoldChange < -3 ~ -Inf,
+      log2FoldChange > max(xlim) ~ Inf,
+      log2FoldChange < min(xlim) ~ -Inf,
       TRUE ~ log2FoldChange
     ))
 
@@ -146,9 +146,10 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
     scale_x_continuous(limits = xlim, breaks=scales::pretty_breaks(n = sum(abs(xlim))))
 
   # if we found any differentially regulated genes, add them to the plot
+  # location is determined by the
   if(nrow(de_tally)>0){
     plot <- plot +
-      geom_text(fontface = "bold", data = de_tally, aes(x = position, y = ymax - 0.7, label = n, colour = class), size = 5.8 )
+      geom_text(fontface = "bold", data = de_tally, aes(x = position, y = ymax - 1.6, label = n, colour = class), size = 5.8 )
   }
 
   # add annotation if requested.
