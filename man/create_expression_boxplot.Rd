@@ -14,7 +14,8 @@ create_expression_boxplot(
   x_lab = ggplot2::waiver(),
   y_lab = expression(log[2](CPM)),
   ymax = NULL,
-  ymin = NULL
+  ymin = NULL,
+  include_n = T
 )
 }
 \arguments{
@@ -42,6 +43,8 @@ Also has to contain column \code{symbol}.}
 \item{ymax}{Max value of the Y axis. Sometimes useful to pick a different value than the default.}
 
 \item{ymin}{Min value of the Y axis. Sometimes useful to pick a different value than the default.}
+
+\item{include_n}{Whether or not to include the number of datapoints that make up a boxplot.}
 }
 \value{
 A ggplot of a boxplot

@@ -459,6 +459,7 @@ gwena_heatmap <- function(scaled_counts, mdata, info_col,
 #' @param y_lab Y axis label. Defaults to \code{log(CPM)}
 #' @param ymax Max value of the Y axis. Sometimes useful to pick a different value than the default.
 #' @param ymin Min value of the Y axis. Sometimes useful to pick a different value than the default.
+#' @param include_n Whether or not to include the number of datapoints that make up a boxplot.
 #'
 #' @return A ggplot of a boxplot
 #'
@@ -473,7 +474,7 @@ create_expression_boxplot <- function(gene, SE, intgroup,
                                       test_comparison=NULL, DESEq_res=NULL,
                                       colors=NULL, x_lab=ggplot2::waiver(),
                                       y_lab=expression(log[2](CPM)),
-                                      ymax=NULL, ymin=NULL){
+                                      ymax=NULL, ymin=NULL, include_n=T){
 
   # subset the SummarizedExperiment to only include the gene of interest.
 
@@ -563,8 +564,12 @@ create_expression_boxplot <- function(gene, SE, intgroup,
     theme_Publication()+
     ylab(y_lab)+
     xlab(x_lab)+
-    ylim(ymin[1],ymax[1])+
-    stat_summary(fun.data = give.n, geom = "text", fun.args = list(ypos=ymin+0.3),size=6)
+    ylim(ymin[1],ymax[1])
+  if (include_n==T){
+    p <- p +
+      stat_summary(fun.data = give.n, geom = "text",
+                   fun.args = list(ypos=ymin+0.3),size=6)
+  }
 
   if (gene_descr != ""){
     p <- p + ggtitle(paste0(gene," (",gene_descr,")"))
