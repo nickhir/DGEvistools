@@ -10,11 +10,13 @@ volcano_plot(
   subtitle = NULL,
   annotate_by = NULL,
   annotation_size = 5.2,
+  text_size = 5.8,
   padj_threshold = 0.05,
   logFC_threshold = 1,
   ymax = NULL,
   xlim = c(-3, 3),
-  res = 300,
+  pt.size = 0.8,
+  pt.shape = 19,
   min_pval_cutoff = 1e-16
 )
 }
@@ -31,6 +33,8 @@ Gene names have to occur in the 'symbol' column of 'de_res'}
 
 \item{annotation_size}{The font size of the annotation.}
 
+\item{text_size}{The font size of the text which indicates the number of differentially expressed genes.}
+
 \item{padj_threshold}{Threshold determining which genes should be counted as differentially expressed}
 
 \item{logFC_threshold}{Threshold determining which genes should be counted as "strongly" differentially expressed}
@@ -39,7 +43,9 @@ Gene names have to occur in the 'symbol' column of 'de_res'}
 
 \item{xlim}{The x axis limits.}
 
-\item{res}{Resolution of the plot. The higher the resolution, the longer takes the plot.}
+\item{pt.size}{size of the points}
+
+\item{pt.shape}{shape of the points}
 
 \item{min_pval_cutoff}{All p values that are smaller than \code{min_pval_cutoff} will be set to \code{min_pval_cutoff} for the visualization}
 }

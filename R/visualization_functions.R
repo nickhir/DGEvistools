@@ -61,11 +61,13 @@ theme_Publication <- function(base_size=14, base_family="sans") {
 #' @param annotate_by A vector with gene names which will be annotated in the volcano plot.
 #' Gene names have to occur in the 'symbol' column of 'de_res'
 #' @param annotation_size The font size of the annotation.
+#' @param text_size The font size of the text which indicates the number of differentially expressed genes.
 #' @param padj_threshold Threshold determining which genes should be counted as differentially expressed
 #' @param logFC_threshold Threshold determining which genes should be counted as "strongly" differentially expressed
 #' @param ymax Maximum of the y axis
 #' @param xlim The x axis limits.
-#' @param res Resolution of the plot. The higher the resolution, the longer takes the plot.
+#' @param pt.size size of the points
+#' @param pt.shape shape of the points
 #' @param min_pval_cutoff All p values that are smaller than \code{min_pval_cutoff} will be set to \code{min_pval_cutoff} for the visualization
 #' @return A ggplot of a volcano plot.
 #'
@@ -79,8 +81,8 @@ theme_Publication <- function(base_size=14, base_family="sans") {
 #' @import ggthemes
 #'
 #' @export
-volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NULL, annotation_size=5.2,
-                         padj_threshold=0.05, logFC_threshold=1, ymax=NULL, xlim=c(-3,3), res=300,
+volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NULL, annotation_size=5.2, text_size = 5.8,
+                         padj_threshold=0.05, logFC_threshold=1, ymax=NULL, xlim=c(-3,3), pt.size=0.8, pt.shape=19,
                          min_pval_cutoff=1e-16){
 
   # check if all required columns exist.
@@ -124,8 +126,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
   plot <- de_res %>%
     dplyr::mutate(padj = ifelse(padj < min_pval_cutoff, min_pval_cutoff, padj)) %>% #threshold at 1e16
     ggplot(aes(x = log2FoldChange, y = -log10(padj))) +
-    #geom_point(aes(colour = class ), size = 0.5) +
-    ggrastr::rasterise(geom_point(aes(colour = class), size = 0.8), dpi = res) + # otherwise if we plot thousands of individual points takes to long
+    geom_point(aes(colour = class), size = pt.size, shape=pt.shape)+ # otherwise if we plot thousands of individual points takes to long
     scale_colour_manual(values = c("non_sig up" = "gray",
                                    "non_sig down" = "gray",
                                    "sig up" = "#EB7F56",
@@ -149,7 +150,7 @@ volcano_plot <- function(de_res, title = NULL, subtitle = NULL, annotate_by = NU
   # location is determined by the
   if(nrow(de_tally)>0){
     plot <- plot +
-      geom_text(fontface = "bold", data = de_tally, aes(x = position, y = ymax - 1.6, label = n, colour = class), size = 5.8 )
+      geom_text(fontface = "bold", data = de_tally, aes(x = position, y = ymax - 1.6, label = n, colour = class), size = text_size )
   }
 
   # add annotation if requested.
